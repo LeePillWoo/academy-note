@@ -9,6 +9,24 @@
 - 휴대폰(삼성 인터넷 포함)과 PC 모두, 가로·세로 화면에 대응합니다.
 - 개발 방식: 웹 앱으로 먼저 만들고, 3단계에서 Capacitor로 APK로 감쌉니다.
 
+## 내려받기 (안드로이드)
+
+- **최신 버전 APK**: https://github.com/LeePillWoo/academy-note/releases/latest/download/academy-note.apk
+- 버전별 목록과 바뀐 점: https://github.com/LeePillWoo/academy-note/releases
+
+폰에서 위 주소를 열어 내려받고, 파일을 열어 설치합니다. ("출처를 알 수 없는 앱 설치"를 물으면 허용) 지금은 테스트용(디버그 서명) 빌드입니다.
+
+### 새 버전 올리는 방법 (개발용)
+
+1. `android/app/build.gradle`의 `versionCode`를 1 올리고 `versionName`과 `package.json`의 `version`을 새 버전으로 바꿉니다.
+2. `npm run apk`로 빌드합니다.
+3. 커밋·푸시한 뒤, 파일 이름을 **`academy-note.apk`로 똑같이** 해서 릴리스를 만듭니다. 이름이 같아야 위의 "최신 버전" 주소가 새 파일을 가리킵니다.
+   ```
+   cp apk/academy-note-debug.apk apk/academy-note.apk
+   gh release create v1.0.1 apk/academy-note.apk --target main --title "학원노트 v1.0.1" --notes "바뀐 점"
+   ```
+4. 업데이트 설치는 **같은 서명 키**로 만든 APK만 됩니다. 디버그 키 백업은 `90_Tools/signing-backup/debug.keystore`에 있습니다.
+
 ## 현재 상태
 
 **1차 마무리 v1.0.0** (2026-10-31) · 0~3단계 완료
@@ -39,7 +57,7 @@
   - 휴대폰 가로, 태블릿 (600px 이상): 왼쪽 좁은 메뉴
   - PC (1024px 이상): 왼쪽 넓은 메뉴
 - 기기가 어두운 모드여도 항상 밝은 화면으로 보입니다. (2026-10-30 변경)
-- Git 저장소를 만들고 GitHub 비공개 저장소에 올렸습니다: https://github.com/LeePillWoo/academy-note (`main` 브랜치)
+- Git 저장소를 만들고 GitHub에 올렸습니다: https://github.com/LeePillWoo/academy-note (`main` 브랜치, 2026-10-31부터 **공개 저장소**)
 
 ## 가족 공유를 쓰려면
 
