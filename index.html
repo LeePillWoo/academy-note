@@ -4,10 +4,9 @@
     <meta charset="UTF-8" />
     <!-- viewport-fit=cover: 노치와 둥근 모서리까지 화면을 쓰고, 여백은 CSS의 safe-area로 맞춥니다. -->
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <!-- 밝은/어두운 화면을 직접 지원한다고 알려서 삼성 인터넷의 강제 다크 모드가 색을 바꾸지 않게 합니다. -->
-    <meta name="color-scheme" content="light dark" />
-    <meta name="theme-color" content="#f5f6fa" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#0f1117" media="(prefers-color-scheme: dark)" />
+    <!-- 기기가 어두운 모드여도 항상 밝은 화면으로 보여줍니다. 브라우저가 색을 강제로 어둡게 바꾸지 않게 합니다. -->
+    <meta name="color-scheme" content="only light" />
+    <meta name="theme-color" content="#f5f6fa" />
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
     <title>학원노트</title>
   </head>

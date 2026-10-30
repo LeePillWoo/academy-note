@@ -23,8 +23,7 @@ function mix(hex: string, amount: number): string {
 }
 
 /**
- * 칩에 쓰는 옅은 색 값: 옅은 바탕(--chip-bg), 테두리(--chip-border),
- * 글자(밝은 화면은 진하게 --chip-fg, 어두운 화면은 밝게 --chip-fg-dark).
+ * 칩에 쓰는 옅은 색 값: 옅은 바탕(--chip-bg), 테두리(--chip-border), 진한 글자(--chip-fg).
  */
 export function softColorVars(hex: string): Record<string, string> {
   const [r, g, b] = rgb(hex)
@@ -32,7 +31,6 @@ export function softColorVars(hex: string): Record<string, string> {
     '--chip-bg': `rgb(${r} ${g} ${b} / 0.14)`,
     '--chip-border': `rgb(${r} ${g} ${b} / 0.28)`,
     '--chip-fg': mix(hex, -0.35),
-    '--chip-fg-dark': mix(hex, 0.45),
   }
 }
 
