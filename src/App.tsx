@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router'
 import AppShell from './layout/AppShell'
 import CalendarPage from './pages/CalendarPage'
 import HomePage from './pages/HomePage'
+import MakeupsPage from './pages/MakeupsPage'
 import PlaceholderPage from './pages/PlaceholderPage'
 import AcademiesPage from './pages/settings/AcademiesPage'
 import AcademyFormPage from './pages/settings/academy/AcademyFormPage'
@@ -16,7 +17,7 @@ export default function App() {
         <Route index element={<HomePage />} />
         <Route path="calendar" element={<CalendarPage />} />
         <Route path="payments" element={<PlaceholderPage title="납부" description="학원별 납부 내역과 미납, 월별 합계를 보여줍니다." />} />
-        <Route path="makeups" element={<PlaceholderPage title="보강" description="남은 보강을 마감이 가까운 순서로 보여줍니다." />} />
+        <Route path="makeups" element={<MakeupsPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="settings/children" element={<ChildrenPage />} />
         <Route path="settings/children/new" element={<ChildFormPage />} />

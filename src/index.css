@@ -945,6 +945,77 @@ fieldset.field > * + * {
   }
 }
 
+/* 보강 상태: 미정(주황), 예정(파랑), 완료(초록), 기한 만료(빨강), 보강 안 함(테두리만) */
+.makeup-pending {
+  color: #b45309;
+  background: #fef3c7;
+}
+
+.makeup-scheduled {
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.makeup-done {
+  color: #15803d;
+  background: #dcfce7;
+}
+
+.makeup-expired {
+  color: #b91c1c;
+  background: #fee2e2;
+}
+
+.makeup-skipped {
+  color: var(--color-muted);
+  border-color: var(--color-border);
+}
+
+@media (prefers-color-scheme: dark) {
+  .makeup-pending {
+    color: #fcd34d;
+    background: #78350f;
+  }
+
+  .makeup-done {
+    color: #86efac;
+    background: #14532d;
+  }
+
+  .makeup-expired {
+    color: #fca5a5;
+    background: #7f1d1d;
+  }
+}
+
+/* 확인할 점(경고), 안내 */
+.warnings {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0.625rem 0.75rem 0.625rem 1.75rem;
+  color: #92400e;
+  font-size: 0.875rem;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 0.625rem;
+}
+
+.note {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  background: var(--color-primary-soft);
+  border-radius: 0.625rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  .warnings {
+    color: #fde68a;
+    background: #422006;
+    border-color: #78350f;
+  }
+}
+
 /* 목록 안의 단추 한 줄 (누르면 창이 열림) */
 .list-button {
   width: 100%;
@@ -983,12 +1054,29 @@ fieldset.field > * + * {
 
 .link-btn {
   justify-self: center;
+  min-height: 2.75rem;
   padding: 0.5rem;
-  color: var(--color-danger);
+  color: var(--color-muted);
   font-size: 0.875rem;
   text-decoration: underline;
   background: none;
   border: 0;
+  cursor: pointer;
+}
+
+.link-btn.is-danger {
+  color: var(--color-danger);
+}
+
+.link-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+/* 접었다 펴는 목록 (지난 보강) */
+details > summary.summary {
+  min-height: 2.75rem;
   cursor: pointer;
 }
 
@@ -1037,6 +1125,11 @@ fieldset.field > * + * {
 .day-dot.is-missed {
   background: transparent;
   box-shadow: inset 0 0 0 1.5px var(--dot);
+}
+
+/* 보강 예정: 네모 점 */
+.day-dot.is-makeup {
+  border-radius: 1px;
 }
 
 .day-panel {
@@ -1252,4 +1345,10 @@ fieldset.field > * + * {
   .calendar-layout {
     grid-template-columns: minmax(0, 28rem) minmax(0, 1fr);
   }
+}
+
+/* 요일 대신 '시각' 같은 글자가 들어가는 칸 */
+.slot-day.slot-label {
+  width: auto;
+  white-space: nowrap;
 }

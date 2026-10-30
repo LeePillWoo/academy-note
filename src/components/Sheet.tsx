@@ -23,7 +23,9 @@ export default function Sheet({ open, onClose, label, children }: SheetProps) {
   }, [open])
 
   return (
-    <dialog ref={ref} className="sheet" aria-label={label} onClose={onClose}
+    // 창 안의 다른 창(날짜 고르기 등)이 닫힐 때도 close 알림이 전달되므로, 이 창이 닫힐 때만 반응합니다.
+    <dialog ref={ref} className="sheet" aria-label={label}
+      onClose={(event) => event.target === ref.current && onClose()}
       onClick={(event) => event.target === ref.current && onClose()}>
       {open && <div className="sheet-body">{children}</div>}
     </dialog>

@@ -1,25 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { addChildren, expectNoHorizontalOverflow, toggleWeekdays } from './helpers'
-
-const ALL_DAYS = ['월', '화', '수', '목', '금', '토', '일']
-
-/** 매일 수업하는 학원을 지난달 1일부터 다닌 것으로 등록합니다. (오늘과 어제가 항상 수업일) */
-async function addDailyAcademy(page: Page, childName: string, academyName: string, start: string, end: string) {
-  await page.goto('/#/settings/academies/new')
-  await page.getByRole('radio', { name: childName }).check()
-  await page.getByLabel('학원 이름').fill(academyName)
-  await page.getByRole('button', { name: /수강 시작일/ }).click()
-  const picker = page.getByRole('dialog', { name: '수강 시작일 고르기' })
-  await picker.getByRole('button', { name: '이전 달' }).click()
-  await picker.getByRole('button', { name: /월 1일 \(/ }).click()
-  await toggleWeekdays(page, '수업', ['월'])
-  await page.getByLabel('수업 월요일 시작 시각').fill(start)
-  await page.getByLabel('수업 월요일 끝 시각').fill(end)
-  await toggleWeekdays(page, '수업', ALL_DAYS.slice(1))
-  await page.getByLabel('한 달 금액').fill('200000')
-  await page.getByRole('button', { name: '저장' }).click()
-  await expect(page.getByRole('heading', { name: '학원 추가' })).toHaveCount(0)
-}
+import { addChildren, addDailyAcademy, expectNoHorizontalOverflow } from './helpers'
 
 /** 브라우저 기준 어제 날짜 'YYYY-MM-DD' */
 function yesterdayIn(page: Page) {
@@ -32,13 +12,13 @@ function yesterdayIn(page: Page) {
 
 test('출석 체크: 오늘 결석 기록, 지난 수업 자동 출석, 휴강 기록과 지우기, 자녀별 보기', async ({ page }, testInfo) => {
   await addChildren(page, ['첫째', '둘째'])
-  await addDailyAcademy(page, '첫째', '수학학원', '16:00', '17:00')
-  await addDailyAcademy(page, '둘째', '피아노', '18:00', '19:00')
+  await addDailyAcademy(page, { childName: '첫째', name: '수학학원', start: '16:00', end: '17:00' })
+  await addDailyAcademy(page, { childName: '둘째', name: '피아노', start: '18:00', end: '19:00' })
   const sheet = page.getByRole('dialog', { name: '수업 기록' })
 
   // 홈: 오늘 수업 두 개 (전체 보기라 자녀 이름도 보임)
   await page.goto('/')
-  const todayRows = page.locator('.home-section .list-button')
+  const todayRows = page.locator('.home-section').first().locator('.list-button')
   await expect(todayRows).toHaveCount(2)
   await expect(todayRows.first()).toContainText('수학학원 · 첫째')
   await expect(todayRows.first()).toContainText('예정')

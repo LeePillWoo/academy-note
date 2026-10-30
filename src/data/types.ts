@@ -118,13 +118,41 @@ export interface Lesson extends BaseRecord {
   end?: TimeStr
   status: LessonStatus
   memo: string
+  /** 보강 출석이면 어떤 보강을 한 것인지 */
+  makeupId?: string
 }
 
-/** 저장하는 데이터 종류입니다. 보강, 납부 같은 새 종류는 여기에 추가합니다. */
+// ===== 보강 =====
+
+/** 저장하는 보강 상태. 미정/예정/기한 만료는 날짜로 계산합니다. (makeupRules.ts) */
+export type MakeupStatus = 'open' | 'done' | 'skipped'
+
+/** 결석이나 휴강으로 생긴 보강 하나 */
+export interface Makeup extends BaseRecord {
+  academyId: string
+  /** 보강하게 된 수업 기록 (결석/휴강) */
+  lessonId: string
+  /** 원래 수업 날짜 */
+  missedOn: DateStr
+  reason: 'absent' | 'cancelled'
+  /** 보강 기한. 없으면 기한 없음 */
+  deadline?: DateStr
+  /** 예정일(완료하면 실제로 간 날)과 시각 */
+  scheduledOn?: DateStr
+  start?: TimeStr
+  end?: TimeStr
+  status: MakeupStatus
+  /** 완료하면 만든 보강 출석 기록 */
+  doneLessonId?: string
+  memo: string
+}
+
+/** 저장하는 데이터 종류입니다. 납부 같은 새 종류는 여기에 추가합니다. */
 export interface Collections {
   children: Child
   academies: Academy
   lessons: Lesson
+  makeups: Makeup
 }
 
 export type CollectionName = keyof Collections

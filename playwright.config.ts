@@ -14,6 +14,7 @@ export default defineConfig({
     channel: 'msedge',
     locale: 'ko-KR',
     timezoneId: 'Asia/Seoul',
+    screenshot: 'only-on-failure',
   },
   projects: [
     {

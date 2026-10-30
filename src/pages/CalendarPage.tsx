@@ -3,11 +3,15 @@ import { Link, useSearchParams } from 'react-router'
 import { BackIcon, ChevronRightIcon, PlusIcon } from '../components/icons'
 import LessonRow from '../components/LessonRow'
 import LessonSheet from '../components/LessonSheet'
+import MakeupRow from '../components/MakeupRow'
+import MakeupSheet from '../components/MakeupSheet'
 import MonthGrid from '../components/MonthGrid'
 import PageHeader from '../components/PageHeader'
 import { useScopedAcademies } from '../data/academies'
 import { buildLessonViews, type LessonView } from '../data/lessonPlan'
 import { useLessons } from '../data/lessons'
+import { useMakeups } from '../data/makeups'
+import type { Makeup } from '../data/types'
 import { addMonths, dateParts, endOfMonth, formatDate, isValidDate, startOfMonth, today, type DateStr } from '../utils/date'
 
 /**
@@ -21,8 +25,23 @@ export default function CalendarPage() {
   const selected = paramDate && isValidDate(paramDate) ? paramDate : todayStr
   const [month, setMonth] = useState(() => startOfMonth(selected))
   const [editing, setEditing] = useState<LessonView | null>(null)
+  const [openMakeupId, setOpenMakeupId] = useState<string | null>(null)
   const academies = useScopedAcademies()
   const { lessons } = useLessons()
+  const { makeups } = useMakeups()
+
+  // 날짜를 잡았지만 아직 다녀오지 않은 보강 (다녀온 보강은 보강 출석 수업으로 보입니다)
+  const scheduledByDate = useMemo(() => {
+    const ids = new Set(academies.map((academy) => academy.id))
+    const map = new Map<DateStr, Makeup[]>()
+    for (const makeup of makeups) {
+      if (!ids.has(makeup.academyId) || makeup.status !== 'open' || !makeup.scheduledOn) continue
+      map.set(makeup.scheduledOn, [...(map.get(makeup.scheduledOn) ?? []), makeup])
+    }
+    return map
+  }, [academies, makeups])
+  const dayMakeups = scheduledByDate.get(selected) ?? []
+  const openMakeup = makeups.find((makeup) => makeup.id === openMakeupId) ?? null
 
   const from = startOfMonth(month)
   const to = endOfMonth(month)
@@ -80,18 +99,24 @@ export default function CalendarPage() {
             selected={selected}
             onSelect={select}
             describeDay={(date) => {
-              const count = byDate.get(date)?.length
-              return count ? `수업 ${count}개` : undefined
+              const lessonCount = byDate.get(date)?.length
+              const makeupCount = scheduledByDate.get(date)?.length
+              return [lessonCount && `수업 ${lessonCount}개`, makeupCount && `보강 예정 ${makeupCount}개`].filter(Boolean).join(', ') || undefined
             }}
             renderDay={(date) => {
-              const views = byDate.get(date)
-              if (!views) return null
+              const views = byDate.get(date) ?? []
+              const planned = scheduledByDate.get(date) ?? []
+              if (views.length + planned.length === 0) return null
+              // 결석·휴강은 속이 빈 점, 보강 예정은 네모 점
               return (
                 <span className="day-dots" aria-hidden="true">
                   {views.slice(0, 4).map((view) => (
                     <span key={view.key}
                       className={view.status === 'absent' || view.status === 'cancelled' ? 'day-dot is-missed' : 'day-dot'}
                       style={{ '--dot': colorOf(view.academyId) } as CSSProperties} />
+                  ))}
+                  {planned.slice(0, 2).map((makeup) => (
+                    <span key={makeup.id} className="day-dot is-makeup" style={{ '--dot': colorOf(makeup.academyId) } as CSSProperties} />
                   ))}
                 </span>
               )
@@ -109,7 +134,7 @@ export default function CalendarPage() {
             {formatDate(selected)}
             {selected === todayStr && <span className="badge status-today">오늘</span>}
           </h2>
-          {dayViews.length === 0 ? (
+          {dayViews.length + dayMakeups.length === 0 ? (
             <div className="card">
               <p className="muted">수업이 없는 날입니다.</p>
             </div>
@@ -120,12 +145,18 @@ export default function CalendarPage() {
                   <LessonRow view={view} onClick={() => setEditing(view)} />
                 </li>
               ))}
+              {dayMakeups.map((makeup) => (
+                <li key={makeup.id}>
+                  <MakeupRow makeup={makeup} onClick={() => setOpenMakeupId(makeup.id)} />
+                </li>
+              ))}
             </ul>
           )}
           <p className="muted">수업을 눌러 출석, 결석, 휴강을 기록하세요. 기록하지 않은 지난 수업은 출석으로 봅니다.</p>
         </div>
       </div>
       <LessonSheet view={editing} onClose={() => setEditing(null)} />
+      <MakeupSheet makeup={openMakeup} onClose={() => setOpenMakeupId(null)} />
     </section>
   )
 }
