@@ -10,6 +10,7 @@ import { useChildren } from '../../../data/children'
 import { nextUnusedColor } from '../../../data/colors'
 import { useSelectedChild } from '../../../data/SelectedChild'
 import { useGoBack } from '../../../hooks/useGoBack'
+import { today } from '../../../utils/date'
 import { objectParticle } from '../../../utils/korean'
 import { draftFromAcademy, newAcademyDraft, validateDraft, type AcademyDraft } from './draft'
 import FeeEditor from './FeeEditor'
@@ -174,6 +175,21 @@ function AcademyForm({ academyId }: { academyId?: string }) {
             <DateField id="academy-started" label="수강 시작일" value={draft.startedOn}
               onChange={(startedOn) => set({ startedOn })} />
             <p className="muted">이날부터 수업일과 납부 항목을 만듭니다. 오래 다닌 학원이면 앱에 기록을 시작할 날을 넣으세요.</p>
+          </div>
+
+          <div className="field">
+            <label className="check-row">
+              <input type="checkbox" checked={draft.endedOn !== undefined}
+                onChange={(event) => set({ endedOn: event.target.checked ? (draft.endedOn ?? today()) : undefined })} />
+              이 학원을 그만뒀어요 (또는 그만둘 예정)
+            </label>
+            {draft.endedOn !== undefined && (
+              <>
+                <DateField label="그만둔 날" value={draft.endedOn} onChange={(endedOn) => set({ endedOn })} />
+                <p className="muted">이날까지만 수업일과 납부 항목을 만듭니다. 지난 기록은 그대로 남습니다.</p>
+                {errors.ended && <p className="field-error">{errors.ended}</p>}
+              </>
+            )}
           </div>
 
           <div className="field">

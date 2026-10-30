@@ -11,9 +11,11 @@ import { useChildren } from '../data/children'
 import { softColorVars } from '../data/colors'
 import { useSelectedChild } from '../data/SelectedChild'
 import {
+  MIN_DURATION,
   buildBlocks,
   dayIndexOf,
   moveSlot,
+  resizeSlot,
   schedulesWithChange,
   snapMinutes,
   timeRange,
@@ -28,17 +30,33 @@ import { WEEKDAY_NAMES, WEEKDAYS_FROM_MONDAY, formatDate, today, weekdayOf, type
 /** 한 시간의 높이 (rem). 7시~24시가 모두 보이므로 너무 길어지지 않게 잡았습니다. */
 const HOUR_HEIGHT_REM = 3
 
+/** 블록 전체를 옮기기 / 위 모서리로 시작 시각 바꾸기 / 아래 모서리로 끝 시각 바꾸기 */
+type DragMode = 'move' | 'resize-start' | 'resize-end'
+
 interface DragState {
   blockId: string
+  mode: DragMode
   dayIndex: number
   startMin: number
+  endMin: number
+}
+
+interface DragRef extends DragState {
+  startX: number
+  startY: number
+  orig: { dayIndex: number; startMin: number; endMin: number }
+  colWidth: number
+  pxPerMin: number
 }
 
 type ApplyMode = 'date' | 'current'
 
+const clamp = (value: number, low: number, high: number) => Math.max(low, Math.min(high, value))
+
 /**
  * 시간표: 한 주의 수업을 요일 × 시각 격자에 보여줍니다.
- * 편집 모드에서는 블록을 끌어서 요일과 시각을 옮기고, 저장할 때 언제부터 적용할지 고릅니다.
+ * 편집 모드에서는 블록을 끌어서 요일과 시각을 옮기고, 위아래 모서리를 끌어 시작·끝 시각을 바꿉니다.
+ * 저장할 때 언제부터 적용할지 고릅니다.
  */
 export default function TimetablePage() {
   const academies = useScopedAcademies()
@@ -54,7 +72,7 @@ export default function TimetablePage() {
   const [infoBlockId, setInfoBlockId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const daysRef = useRef<HTMLDivElement>(null)
-  const dragRef = useRef<(DragState & { startX: number; startY: number; origDayIndex: number; origStartMin: number; duration: number; colWidth: number; pxPerMin: number }) | null>(null)
+  const dragRef = useRef<DragRef | null>(null)
 
   const blocks = useMemo(() => buildBlocks(academies, asOf, overrides), [academies, asOf, overrides])
   const range = useMemo(() => timeRange(blocks), [blocks])
@@ -91,37 +109,49 @@ export default function TimetablePage() {
     return !original || original.start !== block.start || original.end !== block.end
   }
 
-  // ── 끌어서 옮기기 ──
-  function onPointerDown(event: ReactPointerEvent<HTMLButtonElement>, block: TimetableBlock) {
+  // ── 끌기 ──
+  function onPointerDown(event: ReactPointerEvent<HTMLElement>, block: TimetableBlock, mode: DragMode) {
     if (!editing || !daysRef.current) return
+    // 모서리를 잡았으면 블록 옮기기가 같이 시작되지 않게 합니다.
+    if (mode !== 'move') event.stopPropagation()
     const rect = daysRef.current.getBoundingClientRect()
+    const dayIndex = dayIndexOf(block.weekday)
     const startMin = toMinutes(block.start)
+    const endMin = toMinutes(block.end)
     dragRef.current = {
       blockId: block.id,
-      dayIndex: dayIndexOf(block.weekday),
+      mode,
+      dayIndex,
       startMin,
+      endMin,
       startX: event.clientX,
       startY: event.clientY,
-      origDayIndex: dayIndexOf(block.weekday),
-      origStartMin: startMin,
-      duration: toMinutes(block.end) - startMin,
+      orig: { dayIndex, startMin, endMin },
       colWidth: rect.width / 7,
       pxPerMin: rect.height / totalMin,
     }
     event.currentTarget.setPointerCapture(event.pointerId)
-    setDrag({ blockId: block.id, dayIndex: dragRef.current.dayIndex, startMin })
+    setDrag({ blockId: block.id, mode, dayIndex, startMin, endMin })
   }
 
-  function onPointerMove(event: ReactPointerEvent<HTMLButtonElement>) {
+  function onPointerMove(event: ReactPointerEvent<HTMLElement>) {
     const current = dragRef.current
     if (!current) return
-    const dayIndex = Math.max(0, Math.min(6, current.origDayIndex + Math.round((event.clientX - current.startX) / current.colWidth)))
-    const rawStart = current.origStartMin + (event.clientY - current.startY) / current.pxPerMin
-    const startMin = Math.max(range.startMin, Math.min(range.endMin - current.duration, snapMinutes(rawStart)))
-    if (dayIndex !== current.dayIndex || startMin !== current.startMin) {
-      current.dayIndex = dayIndex
-      current.startMin = startMin
-      setDrag({ blockId: current.blockId, dayIndex, startMin })
+    const dy = (event.clientY - current.startY) / current.pxPerMin
+    let { dayIndex, startMin, endMin } = current
+    if (current.mode === 'move') {
+      const duration = current.orig.endMin - current.orig.startMin
+      dayIndex = clamp(current.orig.dayIndex + Math.round((event.clientX - current.startX) / current.colWidth), 0, 6)
+      startMin = clamp(snapMinutes(current.orig.startMin + dy), range.startMin, range.endMin - duration)
+      endMin = startMin + duration
+    } else if (current.mode === 'resize-end') {
+      endMin = clamp(snapMinutes(current.orig.endMin + dy), current.orig.startMin + MIN_DURATION, range.endMin)
+    } else {
+      startMin = clamp(snapMinutes(current.orig.startMin + dy), range.startMin, current.orig.endMin - MIN_DURATION)
+    }
+    if (dayIndex !== current.dayIndex || startMin !== current.startMin || endMin !== current.endMin) {
+      Object.assign(current, { dayIndex, startMin, endMin })
+      setDrag({ blockId: current.blockId, mode: current.mode, dayIndex, startMin, endMin })
     }
   }
 
@@ -130,9 +160,12 @@ export default function TimetablePage() {
     dragRef.current = null
     setDrag(null)
     if (!current) return
-    const moved = current.dayIndex !== current.origDayIndex || current.startMin !== current.origStartMin
-    if (!moved) return
-    const result = moveSlot(slotsOf(block.academyId), block.weekday, weekdayAt(current.dayIndex), toTime(current.startMin))
+    const { orig } = current
+    if (current.dayIndex === orig.dayIndex && current.startMin === orig.startMin && current.endMin === orig.endMin) return
+    const result =
+      current.mode === 'move'
+        ? moveSlot(slotsOf(block.academyId), block.weekday, weekdayAt(current.dayIndex), toTime(current.startMin))
+        : resizeSlot(slotsOf(block.academyId), block.weekday, toTime(current.startMin), toTime(current.endMin))
     if ('error' in result) {
       setMessage(result.error)
       return
@@ -140,10 +173,15 @@ export default function TimetablePage() {
     setOverrides((prev) => new Map(prev).set(block.academyId, result.slots))
   }
 
+  function cancelDrag() {
+    dragRef.current = null
+    setDrag(null)
+  }
+
   function cancelEditing() {
     setOverrides(new Map())
     setEditing(false)
-    setDrag(null)
+    cancelDrag()
   }
 
   if (academies.length === 0) {
@@ -167,7 +205,7 @@ export default function TimetablePage() {
     <section>
       <PageHeader
         title="시간표"
-        subtitle="한 주 수업을 한눈에 봅니다. 편집에서 블록을 끌어 옮길 수 있습니다."
+        subtitle="한 주 수업을 한눈에 봅니다. 편집에서 블록을 끌어 옮기고, 모서리를 끌어 시간을 바꿉니다."
         actions={
           editing ? (
             <div className="tt-actions">
@@ -193,7 +231,7 @@ export default function TimetablePage() {
             <DateField label="기준 날짜" value={asOf} onChange={setAsOf} />
           </div>
           {editing ? (
-            <p className="muted">블록을 끌어서 요일과 시각을 옮기세요. 10분 단위로 맞춰집니다.</p>
+            <p className="muted">블록을 끌어 요일·시각을 옮기고, 위아래 모서리를 끌어 시작·끝 시각을 바꾸세요. 10분 단위입니다.</p>
           ) : (
             colorByChild && (
               <div className="calendar-legend">
@@ -235,12 +273,13 @@ export default function TimetablePage() {
                 const dragging = drag?.blockId === block.id ? drag : null
                 const dayIndex = dragging ? dragging.dayIndex : dayIndexOf(block.weekday)
                 const startMin = dragging ? dragging.startMin : toMinutes(block.start)
-                const duration = toMinutes(block.end) - toMinutes(block.start)
+                const endMin = dragging ? dragging.endMin : toMinutes(block.end)
+                const duration = endMin - startMin
                 const child = colorByChild ? childById.get(academy?.childId ?? '') : undefined
                 const classes = ['tt-block', editing && 'is-editable', dragging && 'is-dragging', isChanged(block) && 'is-changed']
                   .filter(Boolean)
                   .join(' ')
-                const label = `${child ? `${child.name} ` : ''}${academy?.name ?? ''} ${WEEKDAY_NAMES[weekdayAt(dayIndex)]} ${toTime(startMin)}~${toTime(startMin + duration)}`
+                const label = `${child ? `${child.name} ` : ''}${academy?.name ?? ''} ${WEEKDAY_NAMES[weekdayAt(dayIndex)]} ${toTime(startMin)}~${toTime(endMin)}`
                 return (
                   <button
                     key={block.id}
@@ -257,20 +296,19 @@ export default function TimetablePage() {
                     }
                     aria-label={label}
                     title={label}
-                    onPointerDown={(event) => onPointerDown(event, block)}
+                    onPointerDown={(event) => onPointerDown(event, block, 'move')}
                     onPointerMove={onPointerMove}
                     onPointerUp={() => onPointerUp(block)}
-                    onPointerCancel={() => {
-                      dragRef.current = null
-                      setDrag(null)
-                    }}
+                    onPointerCancel={cancelDrag}
                     onClick={() => !editing && setInfoBlockId(block.id)}
                   >
+                    {editing && <span className="tt-handle is-start" aria-hidden="true" onPointerDown={(event) => onPointerDown(event, block, 'resize-start')} />}
                     <span className="tt-block-name">{academy?.name}</span>
                     <span className="tt-block-time">
-                      {toTime(startMin)}~{toTime(startMin + duration)}
+                      {toTime(startMin)}~{toTime(endMin)}
                     </span>
                     {child && duration >= 75 && <span className="tt-block-time">{child.name}</span>}
+                    {editing && <span className="tt-handle is-end" aria-hidden="true" onPointerDown={(event) => onPointerDown(event, block, 'resize-end')} />}
                   </button>
                 )
               })}

@@ -182,6 +182,33 @@ export interface Payment extends BaseRecord {
   memo: string
 }
 
+// ===== 알림 =====
+
+/**
+ * 알림 종류
+ * - paymentOverdue: 납부일이 지났는데 납부 완료를 체크하지 않음 (다음날부터 매일, 체크할 때까지)
+ * - paymentDue: 납부일이 다가옴
+ * - makeupScheduled: 날짜를 잡은 보강이 다가옴
+ * - makeupDeadline: 날짜를 안 잡은 보강의 기한이 다가옴
+ * - lesson: 수업 시작 전 (등원). 기본은 꺼짐
+ */
+export type NotificationKind = 'paymentOverdue' | 'paymentDue' | 'makeupScheduled' | 'makeupDeadline' | 'lesson'
+
+export interface NotificationTiming {
+  id: string
+  /** 며칠 전 (수업 알림은 몇 분 전, 미납 알림은 납부일 며칠 뒤부터) */
+  before: number
+  /** 알림 시각 'HH:MM' (수업 알림은 쓰지 않음) */
+  time: TimeStr
+}
+
+/** 알림 종류마다 하나. id는 종류 이름과 같습니다. */
+export interface NotificationRule extends BaseRecord {
+  kind: NotificationKind
+  enabled: boolean
+  timings: NotificationTiming[]
+}
+
 /** 저장하는 데이터 종류입니다. 새 종류는 여기에 추가합니다. */
 export interface Collections {
   children: Child
@@ -189,6 +216,7 @@ export interface Collections {
   lessons: Lesson
   makeups: Makeup
   payments: Payment
+  notificationRules: NotificationRule
 }
 
 export type CollectionName = keyof Collections

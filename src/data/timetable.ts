@@ -84,6 +84,20 @@ export function moveSlot(slots: TimeSlot[], from: Weekday, to: Weekday, newStart
   return { slots: slots.map((item) => (item.weekday === from ? moved : item)) }
 }
 
+/** 가장 짧은 수업 길이 (분) */
+export const MIN_DURATION = 20
+
+/** 한 시간대의 시작·끝 시각을 바꿉니다. (요일은 그대로) 블록 위아래 모서리를 끌 때 씁니다. */
+export function resizeSlot(slots: TimeSlot[], weekday: Weekday, newStart: TimeStr, newEnd: TimeStr): { slots: TimeSlot[] } | { error: string } {
+  const slot = slots.find((item) => item.weekday === weekday)
+  if (!slot) return { error: '바꿀 수업을 찾지 못했습니다.' }
+  const start = toMinutes(newStart)
+  const end = toMinutes(newEnd)
+  if (end - start < MIN_DURATION) return { error: `수업은 ${MIN_DURATION}분보다 길어야 합니다.` }
+  if (start < 0 || end > 24 * 60) return { error: '하루를 넘어가는 시각입니다.' }
+  return { slots: slots.map((item) => (item.weekday === weekday ? { ...item, start: toTime(start), end: toTime(end) } : item)) }
+}
+
 /** 예: '월 17:00~18:30 → 화 18:00~19:30' */
 export function describeMove(before: TimeSlot, after: TimeSlot): string {
   const text = (slot: TimeSlot) => `${WEEKDAY_NAMES[slot.weekday]} ${slot.start}~${slot.end}`

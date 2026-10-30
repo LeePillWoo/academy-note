@@ -13,8 +13,9 @@ async function dragByColumns(page: Page, selector: ReturnType<Page['locator']>, 
   const daysBox = (await page.locator('.tt-days').boundingBox())!
   const box = (await selector.boundingBox())!
   const col = daysBox.width / 7
+  // 위아래 모서리는 시각 바꾸기 손잡이라서 블록 가운데를 잡습니다.
   const x = box.x + box.width / 2
-  const y = box.y + 10
+  const y = box.y + box.height / 2
   await page.mouse.move(x, y)
   await page.mouse.down()
   await page.mouse.move(x + col * columns, y, { steps: 8 })
@@ -67,12 +68,25 @@ test('시간표: 블록 표시, 정보 창, 편집 모드에서 끌어 옮기기
   await dragByColumns(page, page.locator('.tt-block.is-changed'), 1)
   await expect(page.getByRole('status')).toContainText('수요일에 이미 이 학원 수업이 있습니다.')
   await expect(page.locator('.tt-block.is-changed')).toHaveCount(1)
+
+  // 아래 모서리를 한 시간만큼 끌어 끝 시각을 늦추기 (17:00~18:30 → 17:00~19:30)
+  const handle = page.locator('.tt-block.is-changed .tt-handle.is-end')
+  await handle.scrollIntoViewIfNeeded()
+  const handleBox = (await handle.boundingBox())!
+  const hourPx = (await page.locator('.tt-days').boundingBox())!.height / 17 // 7시~24시 = 17시간
+  const hx = handleBox.x + handleBox.width / 2
+  const hy = handleBox.y + handleBox.height / 2
+  await page.mouse.move(hx, hy)
+  await page.mouse.down()
+  await page.mouse.move(hx, hy + hourPx, { steps: 8 })
+  await page.mouse.up()
+  await expect(page.locator('.tt-block.is-changed')).toHaveAttribute('aria-label', /17:00~19:30/)
   await page.screenshot({ path: testInfo.outputPath('2-editing.png') })
 
   // 저장: 지금 일정 고치기
   await page.getByRole('button', { name: '저장 (1)' }).click()
   const sheet = page.getByRole('dialog', { name: '시간표 변경 적용' })
-  await expect(sheet).toContainText('월·수 17:00~18:30 → 화·수 17:00~18:30')
+  await expect(sheet).toContainText('월·수 17:00~18:30 → 화 17:00~19:30, 수 17:00~18:30')
   await sheet.getByRole('radio', { name: '지금 일정 고치기' }).click()
   await sheet.getByRole('button', { name: '적용' }).click()
   await expect(sheet).toBeHidden()
@@ -80,5 +94,7 @@ test('시간표: 블록 표시, 정보 창, 편집 모드에서 끌어 옮기기
   await expect(page.getByRole('button', { name: '편집' })).toBeVisible()
 
   await page.goto('/#/settings/academies')
-  await expect(page.locator('.list-link', { hasText: '수학학원' })).toContainText('화·수 17:00~18:30')
+  await expect(page.locator('.list-link', { hasText: '수학학원' })).toContainText('화·수 ·')
+  await page.locator('.list-link', { hasText: '수학학원' }).click()
+  await expect(page.getByLabel('수업 화요일 끝 시각')).toHaveValue('19:30')
 })

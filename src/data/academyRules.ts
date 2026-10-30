@@ -24,6 +24,14 @@ export function sortSlots(slots: TimeSlot[]): TimeSlot[] {
   )
 }
 
+/** 예: '월·수·금' (시각 없이 요일만. 학원 목록처럼 간단히 보여줄 때) */
+export function describeWeekdays(slots: TimeSlot[]): string {
+  if (slots.length === 0) return '요일 없음'
+  return sortSlots(slots)
+    .map((slot) => WEEKDAY_NAMES[slot.weekday])
+    .join('·')
+}
+
 /** 예: '월·수·금 17:00~18:30', 시간이 다르면 '월 17:00~18:30, 토 10:00~12:00' */
 export function describeSlots(slots: TimeSlot[]): string {
   if (slots.length === 0) return '요일 없음'

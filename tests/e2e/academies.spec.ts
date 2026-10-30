@@ -44,7 +44,7 @@ test('학원 추가, 수정(학기 중 일정 변경), 삭제', async ({ page },
 
   await expect(academyRows).toHaveCount(1)
   await expect(academyRows.first()).toContainText('수학학원')
-  await expect(academyRows.first()).toContainText('수학 · 월·수·금 17:00~18:30 · 월 25만 원 · 매월 5일')
+  await expect(academyRows.first()).toContainText('수학 · 월·수·금 · 월 25만 원 · 매월 5일')
 
   // ── 첫째의 영어학원 (회차 단위) ──
   await page.getByRole('link', { name: '학원 추가' }).click()
@@ -58,7 +58,7 @@ test('학원 추가, 수정(학기 중 일정 변경), 삭제', async ({ page },
 
   await expect(academyRows).toHaveCount(2)
   await expect(page.locator('.group').first()).toContainText('영어학원')
-  await expect(page.locator('.group').first()).toContainText('화·목 16:00~17:00 · 8회 20만 원')
+  await expect(page.locator('.group').first()).toContainText('화·목 · 8회 20만 원')
   await page.screenshot({ path: testInfo.outputPath('2-academy-list.png') })
 
   // ── 학기 중 일정 변경: 다음 달 1일부터 토요일 추가 ──
@@ -78,7 +78,7 @@ test('학원 추가, 수정(학기 중 일정 변경), 삭제', async ({ page },
   await page.getByRole('button', { name: '저장' }).click()
 
   // 변경은 다음 달부터라 목록의 오늘 기준 일정은 그대로
-  await expect(page.locator('.group').first()).toContainText('화·목 16:00~17:00')
+  await expect(page.locator('.group').first()).toContainText('화·목')
   await page.getByRole('link', { name: /영어학원/ }).click()
   await expect(page.getByText('처음 (수강 시작일부터)')).toBeVisible()
   await expect(page.getByRole('group', { name: '수업 변경 1 요일' }).getByRole('button', { name: '토' }))

@@ -76,6 +76,18 @@ export function usePayments() {
   return { payments: data.payments, pay, unpay, addExtra, removePayment }
 }
 
+const METHOD_KEY = 'academy-note:last-payment-method'
+
+/** 마지막으로 쓴 납부 방법을 기억해 두었다가 다음 납부의 기본값으로 씁니다. */
+export function rememberMethod(method: PaymentMethod) {
+  localStorage.setItem(METHOD_KEY, method)
+}
+
+export function lastMethod(): PaymentMethod {
+  const value = localStorage.getItem(METHOD_KEY)
+  return value === 'card' || value === 'transfer' || value === 'cash' || value === 'other' ? value : 'transfer'
+}
+
 /** 수강료 계산에 필요한 기록(수업, 보강, 오늘) */
 export function useFeeContext(): FeeContext {
   const { data } = useData()

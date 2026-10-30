@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { defaultMakeupRule } from './academyRules'
-import { buildBlocks, moveSlot, schedulesWithChange, snapMinutes, timeRange, toMinutes, toTime } from './timetable'
+import { buildBlocks, moveSlot, resizeSlot, schedulesWithChange, snapMinutes, timeRange, toMinutes, toTime } from './timetable'
 import type { Academy, TimeSlot } from './types'
 
 const monWed: TimeSlot[] = [
@@ -79,6 +79,19 @@ describe('옮기기', () => {
     expect(moveSlot(monWed, 1, 1, '23:00')).toEqual({ error: '하루를 넘어가는 시각입니다.' })
     // 같은 요일 안에서 시각만 바꾸는 건 됨
     expect('slots' in moveSlot(monWed, 1, 1, '18:00')).toBe(true)
+  })
+})
+
+describe('길이 바꾸기', () => {
+  it('시작·끝 시각을 바꾸고, 너무 짧거나 하루를 넘기면 안 됨', () => {
+    expect(resizeSlot(monWed, 1, '17:00', '19:30')).toEqual({
+      slots: [
+        { weekday: 1, start: '17:00', end: '19:30' },
+        { weekday: 3, start: '17:00', end: '18:30' },
+      ],
+    })
+    expect(resizeSlot(monWed, 1, '17:00', '17:10')).toEqual({ error: '수업은 20분보다 길어야 합니다.' })
+    expect(resizeSlot(monWed, 1, '23:00', '24:30')).toEqual({ error: '하루를 넘어가는 시각입니다.' })
   })
 })
 

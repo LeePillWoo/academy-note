@@ -54,7 +54,7 @@ function cleanInfo(info: AcademyInfo): Partial<AcademyInfo> {
   )
 }
 
-export type DraftErrors = Partial<Record<'name' | 'schedules' | 'fees' | 'makeup', string>>
+export type DraftErrors = Partial<Record<'name' | 'ended' | 'schedules' | 'fees' | 'makeup', string>>
 
 export function defaultFeeDraft(startedOn: DateStr): FeeDraft {
   return {
@@ -158,6 +158,7 @@ export function validateDraft(draft: AcademyDraft): { errors: DraftErrors; input
 
   const name = draft.name.trim()
   if (!name) errors.name = '학원 이름을 입력하세요.'
+  if (draft.endedOn !== undefined && draft.endedOn < draft.startedOn) errors.ended = '그만둔 날은 수강 시작일보다 뒤여야 합니다.'
 
   const scheduleProblem =
     periodStartsError(draft.schedules, draft.startedOn) ??

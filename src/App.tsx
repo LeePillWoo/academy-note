@@ -9,6 +9,7 @@ import AcademiesPage from './pages/settings/AcademiesPage'
 import AcademyFormPage from './pages/settings/academy/AcademyFormPage'
 import ChildFormPage from './pages/settings/ChildFormPage'
 import ChildrenPage from './pages/settings/ChildrenPage'
+import NotificationsPage from './pages/settings/NotificationsPage'
 import SettingsPage from './pages/settings/SettingsPage'
 
 export default function App() {
@@ -21,6 +22,7 @@ export default function App() {
         <Route path="payments" element={<PaymentsPage />} />
         <Route path="makeups" element={<MakeupsPage />} />
         <Route path="settings" element={<SettingsPage />} />
+        <Route path="settings/notifications" element={<NotificationsPage />} />
         <Route path="settings/children" element={<ChildrenPage />} />
         <Route path="settings/children/new" element={<ChildFormPage />} />
         <Route path="settings/children/:childId" element={<ChildFormPage />} />

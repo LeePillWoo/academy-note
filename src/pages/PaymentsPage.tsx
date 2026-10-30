@@ -40,8 +40,15 @@ export default function PaymentsPage() {
     [academies, context],
   )
 
+  // 이번 달을 볼 때는 다음 달 항목도 아래에 두어 미리(선납) 체크할 수 있게 합니다.
+  const nextMonthViews = useMemo(() => {
+    if (month !== thisMonth) return []
+    const next = addMonths(month, 1)
+    return buildPaymentViews(academies, payments, startOfMonth(next), endOfMonth(next), context)
+  }, [month, thisMonth, academies, payments, context])
+
   // 저장한 뒤에도 최신 내용으로 보이도록 열쇠로 다시 찾습니다.
-  const opened: PaymentView | null = [...pastUnpaid, ...views].find((view) => view.key === openKey) ?? null
+  const opened: PaymentView | null = [...pastUnpaid, ...views, ...nextMonthViews].find((view) => view.key === openKey) ?? null
   const total = views.reduce((sum, view) => sum + view.amount, 0)
   const paidTotal = views.filter((view) => view.status === 'paid').reduce((sum, view) => sum + view.amount, 0)
   const { year, month: monthNumber } = dateParts(month)
@@ -118,6 +125,15 @@ export default function PaymentsPage() {
           renderList(views)
         )}
       </div>
+
+      {nextMonthViews.length > 0 && (
+        <details className="home-section">
+          <summary className="section-heading summary">
+            다음 달 납부 <span className="muted">{nextMonthViews.length}개 · 미리 내면 여기서 체크</span>
+          </summary>
+          {renderList(nextMonthViews)}
+        </details>
+      )}
 
       {progress.length > 0 && (
         <div className="home-section">

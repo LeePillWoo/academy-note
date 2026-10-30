@@ -2,10 +2,10 @@ import { Link } from 'react-router'
 import { ChevronRightIcon, PlusIcon } from '../../components/icons'
 import PageHeader from '../../components/PageHeader'
 import { useAcademies } from '../../data/academies'
-import { describeFee, describeSlots, periodAt } from '../../data/academyRules'
+import { describeFee, describeWeekdays, periodAt } from '../../data/academyRules'
 import { useChildren } from '../../data/children'
 import { useSelectedChild } from '../../data/SelectedChild'
-import { today } from '../../utils/date'
+import { formatDate, today } from '../../utils/date'
 
 /** 학원 목록. 전체를 보고 있으면 자녀별로 묶어서 보여줍니다. */
 export default function AcademiesPage() {
@@ -52,8 +52,11 @@ export default function AcademiesPage() {
                       <span className="list-text">
                         <span className="list-title">{academy.name}</span>
                         <span className="list-sub">
+                          {academy.endedOn && (
+                            <span className="ended-tag">{academy.endedOn <= now ? '그만둠' : `${formatDate(academy.endedOn)}까지`}</span>
+                          )}
                           {academy.subject && `${academy.subject} · `}
-                          {describeSlots(periodAt(academy.schedules, now))} · {describeFee(periodAt(academy.fees, now))}
+                          {describeWeekdays(periodAt(academy.schedules, now))} · {describeFee(periodAt(academy.fees, now))}
                         </span>
                       </span>
                       <ChevronRightIcon />

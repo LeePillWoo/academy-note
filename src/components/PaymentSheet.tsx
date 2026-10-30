@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useAcademies } from '../data/academies'
 import { useChildren } from '../data/children'
 import { PAYMENT_KIND_LABELS, PAYMENT_METHOD_LABELS, PAYMENT_STATUS_LABELS, type PaymentView } from '../data/paymentPlan'
-import { usePayments } from '../data/payments'
+import { lastMethod, rememberMethod, usePayments } from '../data/payments'
 import type { PaymentMethod } from '../data/types'
 import { formatDate, today, type DateStr } from '../utils/date'
 import { formatNumber, parseAmount } from '../utils/money'
@@ -44,7 +44,7 @@ function PaymentEditor({ view, onDone }: { view: PaymentView; onDone(): void }) 
   // 금액 미정(0)이면 비워두고, 낼 때 넣게 합니다.
   const [amountText, setAmountText] = useState(view.amount ? formatNumber(view.amount) : '')
   const [paidOn, setPaidOn] = useState<DateStr>(view.record?.paidOn ?? today())
-  const [method, setMethod] = useState<PaymentMethod>(view.record?.method ?? 'transfer')
+  const [method, setMethod] = useState<PaymentMethod>(view.record?.method ?? lastMethod())
   const [memo, setMemo] = useState(view.record?.memo ?? '')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -103,7 +103,13 @@ function PaymentEditor({ view, onDone }: { view: PaymentView; onDone(): void }) 
       <div className="sheet-actions">
         <button type="button" className="btn btn-secondary" onClick={onDone} disabled={busy}>닫기</button>
         <button type="button" className="btn btn-primary" disabled={busy || amount === null}
-          onClick={() => amount !== null && run(() => pay(view, { amount, paidOn, method, memo: memo.trim() }))}>
+          onClick={() =>
+            amount !== null &&
+            run(async () => {
+              rememberMethod(method)
+              await pay(view, { amount, paidOn, method, memo: memo.trim() })
+            })
+          }>
           {paid ? '수정 저장' : '납부 완료'}
         </button>
       </div>
