@@ -25,3 +25,6 @@ keystore.properties
 # 테스트 결과
 test-results/
 playwright-report/
+
+# APK 결과물 (빌드해서 만듭니다)
+apk/

@@ -2164,3 +2164,156 @@ details > summary.summary {
     display: none;
   }
 }
+
+/* ===== 시간표 자녀 칸(토글) ===== */
+.tt-child-toggles {
+  padding: 0;
+}
+
+.tt-child-toggles .chip .legend-swatch {
+  width: 0.875rem;
+  height: 0.625rem;
+}
+
+/* 끈 자녀는 흐리게 */
+.tt-child-toggles .chip[aria-pressed='false'] {
+  opacity: 0.5;
+}
+
+/* ===== 인쇄: 시간표를 A4 세로 한 장에 ===== */
+/* 화면에서는 숨겨 두고 인쇄할 때만 보여줍니다. 앱 화면(.shell)은 인쇄에서 뺍니다. */
+.print-sheet {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm;
+  }
+
+  :root {
+    font-size: 11pt;
+    background: #ffffff;
+  }
+
+  .shell,
+  dialog {
+    display: none !important;
+  }
+
+  .print-sheet {
+    display: block;
+    color: #111111;
+  }
+
+  .print-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 4mm;
+    margin-bottom: 4mm;
+    padding-bottom: 2.5mm;
+    border-bottom: 0.6mm solid #111111;
+  }
+
+  .print-head h1 {
+    margin: 0;
+    font-size: 18pt;
+  }
+
+  .print-head p {
+    margin: 0;
+    color: #444444;
+    font-size: 10pt;
+  }
+
+  /* 시간표 높이 228mm를 시간 수로 나눠 한 장에 맞춥니다. */
+  .print-grid {
+    --print-hour: calc(228mm / var(--hours));
+    display: grid;
+    grid-template-columns: 13mm repeat(var(--days), minmax(0, 1fr));
+    grid-template-rows: auto auto;
+  }
+
+  .print-day-head {
+    padding-bottom: 1.5mm;
+    font-size: 11pt;
+    font-weight: 700;
+    text-align: center;
+  }
+
+  .print-day-head.wd-0 {
+    color: #c0262d;
+  }
+
+  .print-day-head.wd-6 {
+    color: #2c4fc9;
+  }
+
+  .print-times {
+    position: relative;
+    height: calc(var(--hours) * var(--print-hour));
+  }
+
+  .print-times span {
+    position: absolute;
+    right: 2mm;
+    color: #444444;
+    font-size: 8pt;
+    transform: translateY(-50%);
+  }
+
+  .print-days {
+    position: relative;
+    grid-column: 2 / -1;
+    height: calc(var(--hours) * var(--print-hour));
+    background:
+      repeating-linear-gradient(to bottom, #aaaaaa 0 0.25mm, transparent 0.25mm var(--print-hour)),
+      repeating-linear-gradient(to right, transparent 0 calc(100% / var(--days) - 0.25mm), #aaaaaa calc(100% / var(--days) - 0.25mm) calc(100% / var(--days)));
+    border: 0.3mm solid #333333;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* 블록: 과목(또는 학원), 시간, 학원, 자녀. 색은 자녀(전체 보기) 또는 학원 색 */
+  .print-block {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3mm;
+    padding: 1.2mm 1.5mm;
+    overflow: hidden;
+    color: #111111;
+    font-size: 8.5pt;
+    line-height: 1.25;
+    background: color-mix(in srgb, var(--c) 14%, #ffffff);
+    border: 0.3mm solid var(--c);
+    border-left-width: 1.2mm;
+    border-radius: 1.2mm;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .print-block strong {
+    font-size: 10pt;
+  }
+
+  .print-foot {
+    display: flex;
+    gap: 6mm;
+    margin-top: 3mm;
+    color: #333333;
+    font-size: 9pt;
+  }
+
+  .print-foot i {
+    display: inline-block;
+    width: 4mm;
+    height: 3mm;
+    vertical-align: -0.3mm;
+    border-radius: 0.6mm;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}

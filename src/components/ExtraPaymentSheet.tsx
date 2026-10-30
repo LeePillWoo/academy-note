@@ -1,11 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useScopedAcademies } from '../data/academies'
 import { useChildren } from '../data/children'
 import { PAYMENT_KIND_LABELS } from '../data/paymentPlan'
-import { usePayments, type ExtraPaymentInput } from '../data/payments'
+import { latestPayment, usePayments, type ExtraPaymentInput } from '../data/payments'
 import type { PaymentMethod } from '../data/types'
 import { today, type DateStr } from '../utils/date'
-import { parseAmount } from '../utils/money'
+import { formatNumber, parseAmount } from '../utils/money'
 import AmountInput from './AmountInput'
 import DateField from './DateField'
 import { METHOD_OPTIONS } from './PaymentSheet'
@@ -34,11 +34,19 @@ export default function ExtraPaymentSheet({ open, onClose }: { open: boolean; on
 function ExtraPaymentForm({ onDone }: { onDone(): void }) {
   const academies = useScopedAcademies()
   const { children } = useChildren()
-  const { addExtra } = usePayments()
+  const { addExtra, payments } = usePayments()
   const [academyId, setAcademyId] = useState(academies[0]?.id ?? '')
   const [kind, setKind] = useState<ExtraKind>('textbook')
   const [title, setTitle] = useState('')
   const [amountText, setAmountText] = useState('')
+  // 자동완성: 같은 학원·종류로 지난번에 넣은 것이 있으면 이름과 금액을 미리 채웁니다. (직접 고치기 전까지)
+  const [touched, setTouched] = useState({ title: false, amount: false })
+  useEffect(() => {
+    const previous = latestPayment(payments, academyId, kind)
+    if (!previous) return
+    if (!touched.title) setTitle(previous.title)
+    if (!touched.amount) setAmountText(previous.amount ? formatNumber(previous.amount) : '')
+  }, [academyId, kind, payments, touched])
   const [dueOn, setDueOn] = useState<DateStr>(today())
   const [alreadyPaid, setAlreadyPaid] = useState(false)
   const [method, setMethod] = useState<PaymentMethod>('transfer')
@@ -92,12 +100,17 @@ function ExtraPaymentForm({ onDone }: { onDone(): void }) {
       <div className="field">
         <label className="field-label" htmlFor="extra-title">이름 (선택)</label>
         <input id="extra-title" className="input" value={title} maxLength={30} autoComplete="off"
-          placeholder={TITLE_PLACEHOLDER[kind]} onChange={(event) => setTitle(event.target.value)} />
+          placeholder={TITLE_PLACEHOLDER[kind]}
+          onChange={(event) => {
+            setTitle(event.target.value)
+            setTouched((prev) => ({ ...prev, title: true }))
+          }} />
       </div>
       <div className="field">
         <label className="field-label" htmlFor="extra-amount">금액</label>
         <AmountInput id="extra-amount" value={amountText} onChange={(value) => {
           setAmountText(value)
+          setTouched((prev) => ({ ...prev, amount: true }))
           setError('')
         }} placeholder="예: 30,000" />
       </div>

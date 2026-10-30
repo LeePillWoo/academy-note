@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useAcademies } from '../data/academies'
 import { useChildren } from '../data/children'
 import { PAYMENT_KIND_LABELS, PAYMENT_STATUS_LABELS, type PaymentView } from '../data/paymentPlan'
-import { lastMethod, usePayments } from '../data/payments'
+import { lastMethod, latestPaidPayment, usePayments } from '../data/payments'
 import { useSelectedChild } from '../data/SelectedChild'
 import { formatDate, today } from '../utils/date'
 import { formatFee, formatWon } from '../utils/money'
@@ -17,7 +17,7 @@ export default function PaymentRow({ view, onClick }: { view: PaymentView; onCli
   const { academies } = useAcademies()
   const { children } = useChildren()
   const { selectedChildId } = useSelectedChild()
-  const { pay } = usePayments()
+  const { payments, pay } = usePayments()
   const [busy, setBusy] = useState(false)
   const academy = academies.find((item) => item.id === view.academyId)
   if (!academy) return null
@@ -31,14 +31,17 @@ export default function PaymentRow({ view, onClick }: { view: PaymentView; onCli
   const checked = view.status === 'paid' && !view.assumed
 
   async function quickCheck() {
-    // 이미 냈거나(수정은 창에서) 금액이 미정이면 창을 엽니다.
-    if (checked || view.amount === 0) {
+    // 자동완성: 금액이 미정이면 지난번 낸 금액을, 방법과 메모도 지난번 것을 씁니다.
+    const previous = latestPaidPayment(payments, view.academyId)
+    const amount = view.amount || previous?.amount || 0
+    // 이미 냈거나(수정은 창에서) 금액을 알 수 없으면 창을 엽니다.
+    if (checked || amount === 0) {
       onClick()
       return
     }
     setBusy(true)
     try {
-      await pay(view, { amount: view.amount, paidOn: today(), method: lastMethod(), memo: '' })
+      await pay(view, { amount, paidOn: today(), method: previous?.method ?? lastMethod(), memo: previous?.memo ?? '' })
     } catch {
       window.alert('저장하지 못했습니다. 다시 시도하세요.')
     } finally {

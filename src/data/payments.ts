@@ -76,6 +76,20 @@ export function usePayments() {
   return { payments: data.payments, pay, unpay, addExtra, removePayment }
 }
 
+/** 이 학원에 가장 최근에 낸 기록. 납부 창과 한 번에 체크의 자동완성(금액·방법·메모)에 씁니다. */
+export function latestPaidPayment(payments: Payment[], academyId: string): Payment | undefined {
+  return payments
+    .filter((payment) => payment.academyId === academyId && payment.paidOn)
+    .sort((a, b) => `${b.paidOn}${b.updatedAt}`.localeCompare(`${a.paidOn}${a.updatedAt}`))[0]
+}
+
+/** 이 학원·종류로 가장 최근에 넣은 기록 (안 낸 것 포함). 추가 납부 자동완성에 씁니다. */
+export function latestPayment(payments: Payment[], academyId: string, kind: PaymentKind): Payment | undefined {
+  return payments
+    .filter((payment) => payment.academyId === academyId && payment.kind === kind)
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0]
+}
+
 const METHOD_KEY = 'academy-note:last-payment-method'
 
 /** 마지막으로 쓴 납부 방법을 기억해 두었다가 다음 납부의 기본값으로 씁니다. */

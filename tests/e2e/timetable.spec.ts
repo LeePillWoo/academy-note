@@ -51,6 +51,26 @@ test('시간표: 블록 표시, 정보 창, 편집 모드에서 끌어 옮기기
   await expectNoHorizontalOverflow(page)
   await page.screenshot({ path: testInfo.outputPath('1-timetable.png') })
 
+  // 오른쪽 위 자녀 칸: 둘째를 끄면 피아노가 사라지고, 인쇄에도 첫째 것만 들어감
+  const toggles = page.getByRole('group', { name: '시간표에 보일 자녀' })
+  await toggles.getByRole('button', { name: '둘째' }).click()
+  await expect(blocks).toHaveCount(2)
+  await expect(blocks.filter({ hasText: '피아노' })).toHaveCount(0)
+  await page.emulateMedia({ media: 'print' })
+  const printSheet = page.locator('.print-sheet')
+  await expect(printSheet).toBeVisible()
+  await expect(printSheet.locator('.print-block')).toHaveCount(2)
+  await expect(printSheet.locator('.print-head')).toContainText('첫째')
+  await expect(printSheet.locator('.print-head')).not.toContainText('둘째')
+  await expect(printSheet.locator('.print-day-head')).toHaveCount(5) // 월~금 (주말 수업 없음)
+  await page.screenshot({ path: testInfo.outputPath('1b-print.png'), fullPage: true })
+  await page.emulateMedia({ media: 'screen' })
+  // 새로고침해도 숨김이 유지되고, 전체를 누르면 다시 보임
+  await page.reload()
+  await expect(blocks).toHaveCount(2)
+  await toggles.getByRole('button', { name: '전체' }).click()
+  await expect(blocks).toHaveCount(3)
+
   // 블록을 누르면 정보 창
   await blocks.filter({ hasText: '피아노' }).click()
   const info = page.getByRole('dialog', { name: '수업 정보' })

@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
 import { Link } from 'react-router'
 import DateField from '../components/DateField'
-import { PlusIcon } from '../components/icons'
+import { PlusIcon, PrinterIcon } from '../components/icons'
 import PageHeader from '../components/PageHeader'
 import Segmented from '../components/Segmented'
 import Sheet from '../components/Sheet'
+import TimetablePrintSheet from '../components/TimetablePrintSheet'
+import { printPage } from '../native/print'
 import { useAcademies, useScopedAcademies } from '../data/academies'
 import { describeSlots, periodAt } from '../data/academyRules'
 import { useChildren } from '../data/children'
@@ -53,6 +55,18 @@ type ApplyMode = 'date' | 'current'
 
 const clamp = (value: number, low: number, high: number) => Math.max(low, Math.min(high, value))
 
+/** 시간표에서 숨긴 자녀 (다음에 열 때도 유지) */
+const HIDDEN_KEY = 'academy-note:timetable-hidden-children'
+
+function readHiddenChildIds(): string[] {
+  try {
+    const value: unknown = JSON.parse(localStorage.getItem(HIDDEN_KEY) ?? '[]')
+    return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []
+  } catch {
+    return []
+  }
+}
+
 /**
  * 시간표: 한 주의 수업을 요일 × 시각 격자에 보여줍니다.
  * 편집 모드에서는 블록을 끌어서 요일과 시각을 옮기고, 위아래 모서리를 끌어 시작·끝 시각을 바꿉니다.
@@ -71,18 +85,41 @@ export default function TimetablePage() {
   const [message, setMessage] = useState('')
   const [infoBlockId, setInfoBlockId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  // 전체 보기에서 시간표에 보일 자녀. 오른쪽 위 자녀 칸을 눌러 켜고 끕니다. (인쇄도 이 기준)
+  const [hiddenChildIds, setHiddenChildIds] = useState<Set<string>>(() => new Set(readHiddenChildIds()))
   const daysRef = useRef<HTMLDivElement>(null)
   const dragRef = useRef<DragRef | null>(null)
 
-  const blocks = useMemo(() => buildBlocks(academies, asOf, overrides), [academies, asOf, overrides])
+  // 전체 보기이고 자녀가 2명 이상이면 블록을 자녀 색으로 칠하고, 자녀 칸으로 보일 자녀를 고릅니다.
+  const colorByChild = !selectedChildId && children.length > 1
+  const visibleAcademies = useMemo(
+    () => (colorByChild ? academies.filter((academy) => !hiddenChildIds.has(academy.childId)) : academies),
+    [academies, colorByChild, hiddenChildIds],
+  )
+  const blocks = useMemo(() => buildBlocks(visibleAcademies, asOf, overrides), [visibleAcademies, asOf, overrides])
   const range = useMemo(() => timeRange(blocks), [blocks])
   const totalMin = range.endMin - range.startMin
   const hours = Array.from({ length: totalMin / 60 }, (_, i) => (range.startMin + i * 60) / 60)
   const academyById = new Map(academies.map((academy) => [academy.id, academy]))
   const childById = new Map(children.map((child) => [child.id, child]))
-  // 전체 보기이고 자녀가 2명 이상이면 블록을 자녀 색으로 칠합니다.
-  const colorByChild = !selectedChildId && children.length > 1
+  const visibleChildren = colorByChild
+    ? children.filter((child) => !hiddenChildIds.has(child.id))
+    : selectedChildId
+      ? children.filter((child) => child.id === selectedChildId)
+      : children
   const todayIndex = dayIndexOf(weekdayOf(todayStr))
+
+  /** 자녀 칸 누르기: null이면 전체 보이기, 아니면 그 자녀 켜고 끄기 */
+  function toggleChild(childId: string | null) {
+    setHiddenChildIds((prev) => {
+      const next = new Set(prev)
+      if (childId === null) next.clear()
+      else if (next.has(childId)) next.delete(childId)
+      else next.add(childId)
+      localStorage.setItem(HIDDEN_KEY, JSON.stringify([...next]))
+      return next
+    })
+  }
   const changedCount = overrides.size
 
   // 안내 문구는 잠시 뒤 사라집니다.
@@ -217,9 +254,15 @@ export default function TimetablePage() {
               </button>
             </div>
           ) : (
-            <button type="button" className="btn btn-secondary btn-small" onClick={() => setEditing(true)}>
-              편집
-            </button>
+            <div className="tt-actions">
+              <button type="button" className="btn btn-secondary btn-small" onClick={() => printPage('학원노트 시간표')}>
+                <PrinterIcon />
+                인쇄
+              </button>
+              <button type="button" className="btn btn-secondary btn-small" onClick={() => setEditing(true)}>
+                편집
+              </button>
+            </div>
           )
         }
       />
@@ -230,21 +273,24 @@ export default function TimetablePage() {
             <span className="muted">기준 날짜</span>
             <DateField label="기준 날짜" value={asOf} onChange={setAsOf} />
           </div>
-          {editing ? (
-            <p className="muted">블록을 끌어 요일·시각을 옮기고, 위아래 모서리를 끌어 시작·끝 시각을 바꾸세요. 10분 단위입니다.</p>
-          ) : (
-            colorByChild && (
-              <div className="calendar-legend">
-                {children.map((child) => (
-                  <span key={child.id} className="legend-item">
-                    <span className="legend-swatch" style={softColorVars(child.color) as CSSProperties} />
-                    {child.name}
-                  </span>
-                ))}
-              </div>
-            )
+          {colorByChild && (
+            <div className="chips tt-child-toggles" role="group" aria-label="시간표에 보일 자녀">
+              <button type="button" className="chip" aria-pressed={hiddenChildIds.size === 0} onClick={() => toggleChild(null)}>
+                전체
+              </button>
+              {children.map((child) => (
+                <button key={child.id} type="button" className="chip" aria-pressed={!hiddenChildIds.has(child.id)}
+                  onClick={() => toggleChild(child.id)}>
+                  <span className="legend-swatch" style={softColorVars(child.color) as CSSProperties} />
+                  {child.name}
+                </button>
+              ))}
+            </div>
           )}
         </div>
+        {editing && (
+          <p className="muted">블록을 끌어 요일·시각을 옮기고, 위아래 모서리를 끌어 시작·끝 시각을 바꾸세요. 10분 단위입니다.</p>
+        )}
         {message && (
           <p className="tt-message" role="status">
             {message}
@@ -317,6 +363,8 @@ export default function TimetablePage() {
         </div>
       </div>
 
+      <TimetablePrintSheet blocks={blocks} academies={academies} childList={children} colorByChild={colorByChild} asOf={asOf}
+        titleNames={visibleChildren.map((child) => child.name)} />
       <BlockInfoSheet block={infoBlock} asOf={asOf} onClose={() => setInfoBlockId(null)} />
       <SaveSheet
         open={saving}

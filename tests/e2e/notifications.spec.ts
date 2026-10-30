@@ -44,13 +44,37 @@ test('알림 설정과 미리보기, 납부 한 번에 체크, 선납, 학원 �
   await expect(items).toHaveCount(1)
   await expect(items.first()).toContainText('12월분')
 
-  // 선납: 다음 달 항목을 미리 체크 → (선납) 표시, 알림 없음
+  // 11월분을 열어 방법을 카드, 메모를 넣어 두면 → 다음 납부 창에 자동완성
   await page.goto('/#/payments')
+  await row.getByRole('button', { name: /납부 완료, 누르면 수정/ }).click()
+  const sheet = page.getByRole('dialog', { name: '납부' })
+  await sheet.getByRole('radio', { name: '카드' }).click()
+  await sheet.getByLabel('메모 (선택)').fill('형제 할인')
+  await sheet.getByRole('button', { name: '수정 저장' }).click()
+  await expect(sheet).toBeHidden()
+
+  // 선납: 다음 달 항목 창에 지난번 방법·메모가 미리 채워짐 → 체크하면 (선납) 표시, 알림 없음
   await page.getByText('다음 달 납부').click()
   const next = page.locator('.payment-row', { hasText: '12월분' })
+  await next.locator('.list-button').click()
+  await expect(sheet.getByRole('radio', { name: '카드' })).toBeChecked()
+  await expect(sheet.getByLabel('메모 (선택)')).toHaveValue('형제 할인')
+  await expect(sheet).toContainText('지난번 11월 6일 (금) · 카드 · 20만 원 · 형제 할인')
+  await sheet.getByRole('button', { name: '닫기' }).click()
   await next.getByRole('button', { name: /납부 완료로 체크/ }).click()
   await expect(next).toContainText('납부 완료')
   await expect(next).toContainText('(선납)')
+  // 추가 납부도 지난 입력을 미리 채움: 교재비 넣고 다시 열면 이름·금액이 들어 있음
+  await page.getByRole('button', { name: /추가 납부/ }).click()
+  const extra = page.getByRole('dialog', { name: '추가 납부' })
+  await extra.getByLabel('이름 (선택)').fill('2학기 교재')
+  await extra.getByLabel('금액').fill('30000')
+  await extra.getByText('이미 냈어요').click()
+  await extra.getByRole('button', { name: '추가' }).click()
+  await page.getByRole('button', { name: /추가 납부/ }).click()
+  await expect(extra.getByLabel('이름 (선택)')).toHaveValue('2학기 교재')
+  await expect(extra.getByLabel('금액')).toHaveValue('30,000')
+  await extra.getByRole('button', { name: '취소' }).click()
   await page.screenshot({ path: testInfo.outputPath('2-payments-checked.png'), fullPage: true })
   await page.goto('/#/settings/notifications')
   await expect(page.getByText('앞으로 30일 동안 울릴 알림이 없습니다.')).toBeVisible()

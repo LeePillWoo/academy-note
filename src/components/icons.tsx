@@ -15,5 +15,11 @@ export const ArrowUpIcon = () => <Icon size={20}><path d="M12 19V5M6 11l6-6 6 6"
 export const ArrowDownIcon = () => <Icon size={20}><path d="M12 5v14M6 13l6 6 6-6" /></Icon>
 export const PlusIcon = () => <Icon size={20}><path d="M12 5v14M5 12h14" /></Icon>
 export const CalendarIcon = () => <Icon size={20}><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M3 10h18M8 3v4M16 3v4" /></Icon>
+export const PrinterIcon = () => (
+  <Icon size={20}>
+    <path d="M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+    <rect x="6" y="14" width="12" height="7" />
+  </Icon>
+)
 export const CheckIcon = () => <Icon size={20}><path d="M5 12l5 5 9-10" /></Icon>
 export const TrashIcon = () => <Icon size={20}><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3" /></Icon>
