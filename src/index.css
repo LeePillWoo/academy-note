@@ -872,6 +872,217 @@ fieldset.field > * + * {
   padding: 0 0.25rem;
 }
 
+/* ===== 상태 표시 (출석, 결석, 휴강 …) ===== */
+.badge {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+  border: 1px solid transparent;
+  border-radius: 999px;
+}
+
+.status-attended {
+  color: #15803d;
+  background: #dcfce7;
+}
+
+.status-absent {
+  color: #b91c1c;
+  background: #fee2e2;
+}
+
+.status-cancelled {
+  color: #9a3412;
+  background: #ffedd5;
+}
+
+.status-makeup {
+  color: #7e22ce;
+  background: #f3e8ff;
+}
+
+.status-planned {
+  color: var(--color-muted);
+  border-color: var(--color-border);
+}
+
+.status-today {
+  margin-left: 0.5rem;
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+/* 기록 없이 출석으로 본 지난 수업: 테두리만 */
+.badge.is-assumed {
+  color: var(--color-muted);
+  background: transparent;
+  border-color: var(--color-border);
+}
+
+@media (prefers-color-scheme: dark) {
+  .status-attended {
+    color: #86efac;
+    background: #14532d;
+  }
+
+  .status-absent {
+    color: #fca5a5;
+    background: #7f1d1d;
+  }
+
+  .status-cancelled {
+    color: #fdba74;
+    background: #7c2d12;
+  }
+
+  .status-makeup {
+    color: #d8b4fe;
+    background: #581c87;
+  }
+}
+
+/* 목록 안의 단추 한 줄 (누르면 창이 열림) */
+.list-button {
+  width: 100%;
+  padding: 0.625rem 1rem;
+  color: inherit;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+@media (hover: hover) {
+  .list-button:hover {
+    background: var(--color-primary-soft);
+  }
+}
+
+.list-button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
+/* ===== 창 안의 제목, 글자 단추 ===== */
+.sheet-header {
+  display: grid;
+  gap: 0.125rem;
+}
+
+.sheet-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.125rem;
+}
+
+.link-btn {
+  justify-self: center;
+  padding: 0.5rem;
+  color: var(--color-danger);
+  font-size: 0.875rem;
+  text-decoration: underline;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+/* ===== 달력 화면 ===== */
+.calendar-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.calendar-card {
+  margin-bottom: 0;
+}
+
+.month-grid.is-calendar .day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.25rem;
+  height: 3.25rem;
+  padding-top: 0.375rem;
+}
+
+/* 달력에서 고른 날: 수업 점이 잘 보이도록 옅은 배경과 테두리 */
+.month-grid.is-calendar .day[aria-pressed='true'] {
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
+  box-shadow: inset 0 0 0 2px var(--color-primary);
+}
+
+.day-dots {
+  display: flex;
+  gap: 0.1875rem;
+}
+
+.day-dot {
+  width: 0.375rem;
+  height: 0.375rem;
+  background: var(--dot);
+  border-radius: 50%;
+}
+
+/* 결석, 휴강: 속이 빈 점 */
+.day-dot.is-missed {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--dot);
+}
+
+.day-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+}
+
+.day-panel .list,
+.day-panel .card {
+  margin-bottom: 0;
+}
+
+.day-title {
+  display: flex;
+  align-items: center;
+  font-size: 1.125rem;
+}
+
+/* ===== 홈 ===== */
+.home-section {
+  display: grid;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.home-section .list,
+.home-section .card {
+  margin-bottom: 0;
+}
+
+.section-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 1.125rem;
+}
+
+.section-link {
+  justify-self: end;
+  padding: 0.25rem 0;
+  color: var(--color-primary);
+  font-size: 0.875rem;
+  text-decoration: none;
+}
+
 /* ===== 불러오는 중, 오류 화면 ===== */
 .status-screen {
   display: grid;
@@ -960,6 +1171,13 @@ fieldset.field > * + * {
   }
 }
 
+/* 휴대폰 가로, 태블릿 이상: 달력과 그날 수업을 나란히 */
+@media (min-width: 720px) {
+  .calendar-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
 /* 휴대폰 가로처럼 높이가 낮은 화면: 고정된 막대를 풀어 본문 공간을 넓히고, 달력 칸을 줄입니다. */
 @media (max-height: 500px) {
   .topbar,
@@ -974,6 +1192,11 @@ fieldset.field > * + * {
 
   .day {
     height: 2rem;
+  }
+
+  .month-grid.is-calendar .day {
+    height: 2.75rem;
+    padding-top: 0.25rem;
   }
 
   .month-nav .icon-btn,
@@ -1024,5 +1247,9 @@ fieldset.field > * + * {
   .sticky-actions {
     margin: 0;
     padding: 0.75rem 0;
+  }
+
+  .calendar-layout {
+    grid-template-columns: minmax(0, 28rem) minmax(0, 1fr);
   }
 }

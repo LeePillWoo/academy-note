@@ -1,7 +1,9 @@
 import { useMemo } from 'react'
 import { normalizePeriods } from './academyRules'
+import { academyRemovalChanges } from './cascade'
 import { useData } from './DataProvider'
 import { newId, nowIso } from './id'
+import { useSelectedChild } from './SelectedChild'
 import type { Academy } from './types'
 
 /** 학원을 저장할 때 화면에서 넘기는 내용 (id가 없으면 새 학원) */
@@ -35,10 +37,20 @@ export function useAcademies() {
     return item
   }
 
-  // 1-3 이후에는 학원을 지울 때 그 학원의 수업 기록, 보강, 납부도 함께 지우도록 바꿉니다.
+  /** 학원을 지우면 그 학원의 기록도 함께 지웁니다. */
   async function removeAcademy(id: string) {
-    await apply([{ type: 'remove', collection: 'academies', id }])
+    await apply(academyRemovalChanges(data, id))
   }
 
   return { academies, saveAcademy, removeAcademy }
+}
+
+/** 위쪽에서 고른 자녀의 학원 (전체면 모든 학원) */
+export function useScopedAcademies() {
+  const { academies } = useAcademies()
+  const { selectedChildId } = useSelectedChild()
+  return useMemo(
+    () => (selectedChildId ? academies.filter((academy) => academy.childId === selectedChildId) : academies),
+    [academies, selectedChildId],
+  )
 }

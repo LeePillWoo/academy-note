@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { childRemovalChanges } from './cascade'
 import { useData } from './DataProvider'
 import { newId, nowIso } from './id'
 import type { Child } from './types'
@@ -30,13 +31,9 @@ export function useChildren() {
     await apply([{ type: 'put', collection: 'children', item }])
   }
 
-  /** 자녀를 지우면 그 자녀의 학원도 함께 지웁니다. */
+  /** 자녀를 지우면 그 자녀의 학원과 기록도 함께 지웁니다. */
   async function removeChild(id: string) {
-    const academyIds = data.academies.filter((academy) => academy.childId === id).map((academy) => academy.id)
-    await apply([
-      ...academyIds.map((academyId) => ({ type: 'remove' as const, collection: 'academies' as const, id: academyId })),
-      { type: 'remove', collection: 'children', id },
-    ])
+    await apply(childRemovalChanges(data, id))
   }
 
   /** 순서를 한 칸 앞(-1)이나 뒤(+1)로 옮깁니다. */

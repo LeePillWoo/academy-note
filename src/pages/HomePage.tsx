@@ -1,14 +1,24 @@
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { PlusIcon } from '../components/icons'
+import LessonRow from '../components/LessonRow'
+import LessonSheet from '../components/LessonSheet'
 import PageHeader from '../components/PageHeader'
-import { useAcademies } from '../data/academies'
+import { useScopedAcademies } from '../data/academies'
 import { useChildren } from '../data/children'
+import { buildLessonViews, type LessonView } from '../data/lessonPlan'
+import { useLessons } from '../data/lessons'
 import { useSelectedChild } from '../data/SelectedChild'
+import { formatDate, today } from '../utils/date'
 
 export default function HomePage() {
   const { children } = useChildren()
-  const { academies } = useAcademies()
+  const academies = useScopedAcademies()
+  const { lessons } = useLessons()
   const { selectedChild } = useSelectedChild()
+  const [editing, setEditing] = useState<LessonView | null>(null)
+  const todayStr = today()
+  const todayViews = useMemo(() => buildLessonViews(academies, lessons, todayStr, todayStr, todayStr), [academies, lessons, todayStr])
 
   if (children.length === 0) {
     return (
@@ -26,31 +36,51 @@ export default function HomePage() {
     )
   }
 
-  const scoped = selectedChild ? academies.filter((academy) => academy.childId === selectedChild.id) : academies
+  if (academies.length === 0) {
+    return (
+      <section className="narrow">
+        <PageHeader title="홈" />
+        <div className="card">
+          <h2 className="card-title">
+            {selectedChild && <span className="dot" style={{ background: selectedChild.color }} />}
+            {selectedChild ? `${selectedChild.name}의 학원` : '학원'}
+          </h2>
+          <p>등록된 학원이 없습니다. 학원을 등록하면 수업일, 납부, 보강을 관리할 수 있습니다.</p>
+          <Link to="/settings/academies/new" className="btn btn-primary">
+            <PlusIcon />
+            학원 등록하기
+          </Link>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section className="narrow">
       <PageHeader title="홈" />
-      <div className="card">
-        <h2 className="card-title">
-          {selectedChild && <span className="dot" style={{ background: selectedChild.color }} />}
-          {selectedChild ? `${selectedChild.name}의 일정` : '모든 자녀의 일정'}
+      <div className="home-section">
+        <h2 className="section-heading">
+          오늘 수업 <span className="muted">{formatDate(todayStr)}</span>
         </h2>
-        {scoped.length === 0 ? (
-          <>
-            <p>등록된 학원이 없습니다. 학원을 등록하면 수업일, 납부, 보강을 관리할 수 있습니다.</p>
-            <Link to="/settings/academies/new" className="btn btn-primary">
-              <PlusIcon />
-              학원 등록하기
-            </Link>
-          </>
+        {todayViews.length === 0 ? (
+          <div className="card">
+            <p className="muted">오늘은 수업이 없습니다.</p>
+          </div>
         ) : (
-          <>
-            <p>학원 {scoped.length}곳: {scoped.map((academy) => academy.name).join(', ')}</p>
-            <p className="muted">오늘 수업, 예정된 보강, 미납 학원은 다음 단계에서 이곳에 보여줍니다.</p>
-          </>
+          <ul className="list">
+            {todayViews.map((view) => (
+              <li key={view.key}>
+                <LessonRow view={view} onClick={() => setEditing(view)} />
+              </li>
+            ))}
+          </ul>
         )}
+        <Link to="/calendar" className="section-link">달력에서 다른 날 보기</Link>
       </div>
+      <div className="card">
+        <p className="muted">예정된 보강과 미납 학원은 다음 조각에서 이곳에 보여줍니다.</p>
+      </div>
+      <LessonSheet view={editing} onClose={() => setEditing(null)} />
     </section>
   )
 }

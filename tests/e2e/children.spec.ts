@@ -20,7 +20,7 @@ test('자녀 등록, 선택, 순서 변경, 수정, 삭제', async ({ page }, te
   await page.getByRole('button', { name: '저장' }).click()
 
   // 홈으로 돌아옴. 자녀가 1명이면 자녀 선택은 보이지 않음
-  await expect(page.getByRole('heading', { name: '모든 자녀의 일정' })).toBeVisible()
+  await expect(page.getByRole('link', { name: '학원 등록하기' })).toBeVisible()
   await expect(switcher).toHaveCount(0)
 
   // 설정 > 자녀에서 둘째 추가 (색은 초록)
@@ -45,9 +45,9 @@ test('자녀 등록, 선택, 순서 변경, 수정, 삭제', async ({ page }, te
   // 둘째를 고르면 홈에 반영되고, 새로고침해도 데이터와 선택이 유지됨
   await switcher.getByRole('button', { name: '둘째' }).click()
   await nav.getByRole('link', { name: '홈' }).click()
-  await expect(page.getByRole('heading', { name: '둘째의 일정' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '둘째의 학원' })).toBeVisible()
   await page.reload()
-  await expect(page.getByRole('heading', { name: '둘째의 일정' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: '둘째의 학원' })).toBeVisible()
   await expect(switcher.getByRole('button', { name: '둘째' })).toHaveAttribute('aria-pressed', 'true')
   await page.screenshot({ path: testInfo.outputPath('4-home-selected.png') })
 

@@ -4,7 +4,8 @@ interface SegmentedProps<T extends string> {
   /** 화면 읽기 프로그램에 읽어줄 이름 */
   label: string
   name: string
-  value: T
+  /** null이면 아무것도 고르지 않은 상태 */
+  value: T | null
   options: { value: T; label: ReactNode }[]
   onChange(value: T): void
 }

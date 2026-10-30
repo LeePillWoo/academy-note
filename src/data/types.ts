@@ -102,10 +102,29 @@ export interface Academy extends BaseRecord {
   makeupRule: MakeupRule
 }
 
-/** 저장하는 데이터 종류입니다. 납부, 수업 기록 같은 새 종류는 여기에 추가합니다. */
+// ===== 수업 기록 =====
+
+/** 출석, 결석, 휴강, 보강 출석 */
+export type LessonStatus = 'attended' | 'absent' | 'cancelled' | 'makeup'
+
+/**
+ * 수업 기록. 수업일은 학원 일정에서 계산하고, 기록은 출석/결석/휴강을 직접 남긴 날만 저장합니다.
+ * 일정에 있는 수업은 학원과 날짜로 찾습니다. (한 학원은 하루에 수업이 하나)
+ */
+export interface Lesson extends BaseRecord {
+  academyId: string
+  date: DateStr
+  start?: TimeStr
+  end?: TimeStr
+  status: LessonStatus
+  memo: string
+}
+
+/** 저장하는 데이터 종류입니다. 보강, 납부 같은 새 종류는 여기에 추가합니다. */
 export interface Collections {
   children: Child
   academies: Academy
+  lessons: Lesson
 }
 
 export type CollectionName = keyof Collections
