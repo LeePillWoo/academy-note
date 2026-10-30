@@ -30,9 +30,13 @@ export function useChildren() {
     await apply([{ type: 'put', collection: 'children', item }])
   }
 
-  // 1-2에서 학원이 생기면, 자녀를 지울 때 그 자녀의 학원도 함께 지우도록 바꿉니다.
+  /** 자녀를 지우면 그 자녀의 학원도 함께 지웁니다. */
   async function removeChild(id: string) {
-    await apply([{ type: 'remove', collection: 'children', id }])
+    const academyIds = data.academies.filter((academy) => academy.childId === id).map((academy) => academy.id)
+    await apply([
+      ...academyIds.map((academyId) => ({ type: 'remove' as const, collection: 'academies' as const, id: academyId })),
+      { type: 'remove', collection: 'children', id },
+    ])
   }
 
   /** 순서를 한 칸 앞(-1)이나 뒤(+1)로 옮깁니다. */

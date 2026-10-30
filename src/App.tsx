@@ -2,6 +2,8 @@ import { Navigate, Route, Routes } from 'react-router'
 import AppShell from './layout/AppShell'
 import HomePage from './pages/HomePage'
 import PlaceholderPage from './pages/PlaceholderPage'
+import AcademiesPage from './pages/settings/AcademiesPage'
+import AcademyFormPage from './pages/settings/academy/AcademyFormPage'
 import ChildFormPage from './pages/settings/ChildFormPage'
 import ChildrenPage from './pages/settings/ChildrenPage'
 import SettingsPage from './pages/settings/SettingsPage'
@@ -18,6 +20,9 @@ export default function App() {
         <Route path="settings/children" element={<ChildrenPage />} />
         <Route path="settings/children/new" element={<ChildFormPage />} />
         <Route path="settings/children/:childId" element={<ChildFormPage />} />
+        <Route path="settings/academies" element={<AcademiesPage />} />
+        <Route path="settings/academies/new" element={<AcademyFormPage />} />
+        <Route path="settings/academies/:academyId" element={<AcademyFormPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

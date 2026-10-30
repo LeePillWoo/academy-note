@@ -1,13 +1,15 @@
 import { Link } from 'react-router'
 import { ChevronRightIcon } from '../../components/icons'
 import PageHeader from '../../components/PageHeader'
+import { useAcademies } from '../../data/academies'
 import { useChildren } from '../../data/children'
 
 // 아직 만들지 않은 설정. 만들면 링크로 바꿉니다.
-const UPCOMING = ['학원', '알림', '백업과 복원']
+const UPCOMING = ['알림', '백업과 복원']
 
 export default function SettingsPage() {
   const { children } = useChildren()
+  const { academies } = useAcademies()
 
   return (
     <section className="narrow">
@@ -17,6 +19,13 @@ export default function SettingsPage() {
           <Link to="/settings/children" className="list-row list-link">
             <span className="list-text">자녀</span>
             <span className="muted">{children.length}명</span>
+            <ChevronRightIcon />
+          </Link>
+        </li>
+        <li>
+          <Link to="/settings/academies" className="list-row list-link">
+            <span className="list-text">학원</span>
+            <span className="muted">{academies.length}곳</span>
             <ChevronRightIcon />
           </Link>
         </li>

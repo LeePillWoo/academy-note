@@ -10,6 +10,8 @@
   --color-text: #1f2937;
   --color-muted: #6b7280;
   --color-border: #e5e7eb;
+  --color-sunday: #dc2626;
+  --color-saturday: #2563eb;
   --nav-height: 4rem;
   --radius: 0.75rem;
 
@@ -32,6 +34,8 @@
     --color-text: #f3f4f6;
     --color-muted: #9ca3af;
     --color-border: #374151;
+    --color-sunday: #f87171;
+    --color-saturday: #60a5fa;
   }
 }
 
@@ -243,6 +247,22 @@ textarea {
   margin-top: 0.75rem;
 }
 
+/*
+ * 한 줄로 쌓는 칸들은 열 너비를 minmax(0, 1fr)로 둡니다.
+ * 그냥 두면 안의 입력칸(시각 입력 등)이 최소 너비를 고집해서 카드가 화면보다 넓어지고,
+ * 휴대폰 브라우저가 화면 전체를 축소해서 보여줍니다.
+ */
+.card,
+.form,
+.form-stack,
+.field,
+.slots-editor,
+.period.is-multiple,
+.period-head,
+.sheet-body {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 /* ===== 단추 ===== */
 .btn {
   display: inline-flex;
@@ -390,7 +410,25 @@ textarea {
 
 /* ===== 입력 ===== */
 .form {
+  display: grid;
   gap: 1.25rem;
+}
+
+.form > .card {
+  margin-bottom: 0;
+}
+
+.form-section {
+  gap: 1rem;
+}
+
+.section-title {
+  font-size: 1.0625rem;
+}
+
+.form-stack {
+  display: grid;
+  gap: 1rem;
 }
 
 .field {
@@ -489,6 +527,351 @@ fieldset.field > * + * {
   outline-offset: 6px;
 }
 
+.textarea {
+  min-height: 5.5rem;
+  padding: 0.625rem 0.875rem;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+/* 금액처럼 뒤에 단위가 붙는 입력 */
+.input-with-unit {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.input-with-unit .input {
+  flex: 1;
+  text-align: right;
+}
+
+.unit {
+  color: var(--color-muted);
+}
+
+.btn-small {
+  justify-self: start;
+  min-height: 2.5rem;
+  padding: 0 0.875rem;
+  font-size: 0.9375rem;
+}
+
+/* 긴 입력 화면: 저장 단추가 늘 보이도록 아래에 붙여 둡니다. */
+.sticky-actions {
+  position: sticky;
+  bottom: calc(var(--nav-height) + env(safe-area-inset-bottom));
+  z-index: 4;
+  margin: 0 -1rem;
+  padding: 0.75rem 1rem;
+  background: var(--color-bg);
+  border-top: 1px solid var(--color-border);
+}
+
+.delete-btn {
+  margin-top: 1rem;
+}
+
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-height: 2.75rem;
+  cursor: pointer;
+}
+
+.check-row input {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin: 0;
+  accent-color: var(--color-primary);
+}
+
+/* ===== 기간별 설정 (학기 중 변경) ===== */
+.period.is-multiple {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.875rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.625rem;
+}
+
+.period-head {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.period-label {
+  color: var(--color-muted);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.period-date {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.period-date .date-input {
+  flex: 1;
+}
+
+/* ===== 요일과 시간 ===== */
+.slots-editor {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.weekday-toggles {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.375rem;
+}
+
+.weekday-toggle {
+  min-height: 2.75rem;
+  padding: 0;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.slot-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.slot-day {
+  flex-shrink: 0;
+  width: 1.5rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.time-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0 0.5rem;
+  text-align: center;
+}
+
+/* 휴대폰은 입력칸을 누르면 시간 선택 창이 열리므로 시계 아이콘을 숨겨 글자 자리를 넓힙니다. */
+@media (pointer: coarse) {
+  .time-input::-webkit-calendar-picker-indicator {
+    display: none;
+  }
+}
+
+/* 일요일은 빨강, 토요일은 파랑 (한국 달력 관례) */
+.wd-0 {
+  color: var(--color-sunday);
+}
+
+.wd-6 {
+  color: var(--color-saturday);
+}
+
+.weekday-toggle[aria-pressed='true'] {
+  color: var(--color-on-primary);
+  font-weight: 600;
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+/* ===== 선택 단추 묶음 ===== */
+.segmented {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+}
+
+.segment {
+  position: relative;
+  display: flex;
+  flex: 1;
+  min-width: 0;
+}
+
+.segment input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.segment > span {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  min-height: 2.5rem;
+  padding: 0 0.5rem;
+  color: var(--color-muted);
+  font-size: 0.9375rem;
+  text-align: center;
+  border-radius: 0.5rem;
+}
+
+.segment > input:checked + span {
+  color: var(--color-text);
+  font-weight: 600;
+  background: var(--color-surface);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.15);
+}
+
+.segment > input:focus-visible + span {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+/* ===== 날짜 입력과 달력 창 ===== */
+.date-input {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.date-input svg {
+  flex-shrink: 0;
+  color: var(--color-muted);
+}
+
+/* 휴대폰: 아래에서 올라오는 창, 넓은 화면: 가운데 창 */
+.sheet {
+  width: 100%;
+  max-width: 100%;
+  max-height: 100dvh;
+  margin: auto 0 0;
+  padding: 0;
+  overflow: auto;
+  color: var(--color-text);
+  background: var(--color-surface);
+  border: 0;
+  border-radius: 1rem 1rem 0 0;
+}
+
+.sheet::backdrop {
+  background: rgb(0 0 0 / 0.45);
+}
+
+.sheet-body {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom));
+}
+
+.month-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.month-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.25rem;
+  text-align: center;
+}
+
+.month-weekday {
+  padding: 0.25rem 0;
+  font-size: 0.75rem;
+}
+
+.month-weekday:not(.wd-0):not(.wd-6) {
+  color: var(--color-muted);
+}
+
+.day {
+  height: 2.75rem;
+  padding: 0;
+  font-size: 0.9375rem;
+  background: transparent;
+  border: 0;
+  border-radius: 0.625rem;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.day:not(.wd-0):not(.wd-6) {
+  color: var(--color-text);
+}
+
+.day.is-today {
+  font-weight: 700;
+  box-shadow: inset 0 0 0 1px var(--color-primary);
+}
+
+.month-grid .day[aria-pressed='true'] {
+  color: var(--color-on-primary);
+  font-weight: 700;
+  background: var(--color-primary);
+}
+
+.month-grid .day:disabled {
+  color: var(--color-border);
+  cursor: default;
+}
+
+.sheet-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.sheet-actions .btn {
+  flex: 1;
+}
+
+/* ===== 두 줄 목록, 자녀별 묶음 ===== */
+.list-title,
+.list-sub {
+  display: block;
+}
+
+.list-sub {
+  margin-top: 0.125rem;
+  color: var(--color-muted);
+  font-size: 0.8125rem;
+}
+
+.list-link {
+  padding-top: 0.625rem;
+  padding-bottom: 0.625rem;
+}
+
+.group {
+  margin-bottom: 1.25rem;
+}
+
+.group .list {
+  margin-bottom: 0;
+}
+
+.group-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+}
+
+.group-empty {
+  padding: 0 0.25rem;
+}
+
 /* ===== 불러오는 중, 오류 화면 ===== */
 .status-screen {
   display: grid;
@@ -563,12 +946,40 @@ fieldset.field > * + * {
   .topbar.has-switcher + .content {
     padding-top: 1.5rem;
   }
+
+  .sticky-actions {
+    bottom: env(safe-area-inset-bottom);
+    margin: 0 -1.5rem;
+    padding: 0.75rem 1.5rem;
+  }
+
+  .sheet {
+    width: 22rem;
+    margin: auto;
+    border-radius: 1rem;
+  }
 }
 
-/* 휴대폰 가로처럼 높이가 낮은 화면: 위쪽 막대를 고정하지 않아 본문 공간을 넓힙니다. */
+/* 휴대폰 가로처럼 높이가 낮은 화면: 고정된 막대를 풀어 본문 공간을 넓히고, 달력 칸을 줄입니다. */
 @media (max-height: 500px) {
-  .topbar {
+  .topbar,
+  .sticky-actions {
     position: static;
+  }
+
+  .sheet-body {
+    gap: 0.25rem;
+    padding: 0.5rem 1rem;
+  }
+
+  .day {
+    height: 2rem;
+  }
+
+  .month-nav .icon-btn,
+  .sheet-actions .btn {
+    height: 2.25rem;
+    min-height: 2.25rem;
   }
 }
 
@@ -608,5 +1019,10 @@ fieldset.field > * + * {
   .topbar.has-switcher + .content {
     max-width: 72rem;
     padding: 2rem 2.5rem;
+  }
+
+  .sticky-actions {
+    margin: 0;
+    padding: 0.75rem 0;
   }
 }
