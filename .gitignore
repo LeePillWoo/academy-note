@@ -1,0 +1,23 @@
+# 의존성, 빌드 결과물
+node_modules/
+dist/
+*.tsbuildinfo
+
+# 편집기, 운영체제
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# 로그
+*.log
+
+# 환경 변수
+.env
+.env.*
+
+# APK 서명 키 (절대 올리지 않음)
+*.jks
+*.keystore
+keystore.properties

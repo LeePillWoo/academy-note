@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- viewport-fit=cover: 노치와 둥근 모서리까지 화면을 쓰고, 여백은 CSS의 safe-area로 맞춥니다. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <!-- 밝은/어두운 화면을 직접 지원한다고 알려서 삼성 인터넷의 강제 다크 모드가 색을 바꾸지 않게 합니다. -->
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#2f6fed" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#111827" media="(prefers-color-scheme: dark)" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <title>학원노트</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
