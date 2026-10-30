@@ -36,19 +36,19 @@ test('출석 체크: 오늘 결석 기록, 지난 수업 자동 출석, 휴강 �
   await expect(todayRows.first()).toContainText('감기')
   await page.screenshot({ path: testInfo.outputPath('2-home-today.png') })
 
-  // 달력(전체): 오늘 칸에 자녀 태그 두 개, 결석한 첫째는 속이 빈 태그
+  // 달력(전체): 오늘 칸에 일정 칩 두 개, 결석한 수학학원은 줄 그은 칩, 범례에 자녀
   await page.getByRole('navigation', { name: '주 메뉴' }).getByRole('link', { name: '달력' }).click()
   const todayCell = page.locator('.is-calendar .day.is-today')
-  await expect(todayCell.locator('.mini-tag')).toHaveText(['첫', '둘'])
-  await expect(todayCell.locator('.mini-tag.is-missed')).toHaveText('첫')
+  await expect(todayCell.locator('.cal-chip')).toHaveCount(2)
+  await expect(todayCell.locator('.cal-chip.is-missed')).toContainText('수학학원')
   await expect(page.locator('.calendar-legend')).toContainText('첫째')
   await expectNoHorizontalOverflow(page)
-  await page.screenshot({ path: testInfo.outputPath('2b-calendar-tags.png') })
+  await page.screenshot({ path: testInfo.outputPath('2b-calendar-chips.png') })
 
-  // 자녀 하나를 고르면 태그 대신 학원 점
+  // 자녀 하나를 고르면 그 아이 일정만
   await page.getByRole('group', { name: '자녀 선택' }).getByRole('button', { name: '첫째' }).click()
-  await expect(todayCell.locator('.mini-tag')).toHaveCount(0)
-  await expect(todayCell.locator('.day-dot.is-missed')).toHaveCount(1)
+  await expect(todayCell.locator('.cal-chip')).toHaveCount(1)
+  await expect(page.locator('.calendar-legend')).not.toContainText('첫째')
   await page.getByRole('group', { name: '자녀 선택' }).getByRole('button', { name: '전체' }).click()
 
   // 어제: 기록하지 않았으니 출석(자동)

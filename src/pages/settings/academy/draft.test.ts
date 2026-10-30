@@ -19,16 +19,22 @@ describe('학원 입력 검사', () => {
     expect(input?.fees[0].value).toEqual({ type: 'monthly', amount: 250_000, dueDay: 5 })
   })
 
-  it('이름, 요일, 금액이 없으면 오류', () => {
+  it('이름, 요일이 없으면 오류', () => {
     const draft = validDraft()
     draft.name = '  '
     draft.schedules[0].value = []
-    draft.fees[0].value.amountText = ''
     const { errors, input } = validateDraft(draft)
     expect(input).toBeUndefined()
     expect(errors.name).toBe('학원 이름을 입력하세요.')
     expect(errors.schedules).toBe('수업 요일을 하나 이상 고르세요.')
-    expect(errors.fees).toBe('수강료 금액을 입력하세요.')
+  })
+
+  it('수강료 금액은 비워도 저장됨 (0 = 금액 미정)', () => {
+    const draft = validDraft()
+    draft.fees[0].value.amountText = ''
+    const { errors, input } = validateDraft(draft)
+    expect(errors).toEqual({})
+    expect(input?.fees[0].value).toEqual({ type: 'monthly', amount: 0, dueDay: 5 })
   })
 
   it('끝 시각이 시작 시각보다 빠르면 오류', () => {

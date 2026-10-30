@@ -1,5 +1,5 @@
 import { WEEKDAY_NAMES, WEEKDAYS_FROM_MONDAY, type DateStr } from '../utils/date'
-import { formatWon } from '../utils/money'
+import { formatFee } from '../utils/money'
 import type { AbsenceCounting, FeePlan, MakeupRule, MakeupWindow, Period, TimeSlot } from './types'
 
 /** date에 적용되는 기간 설정. date가 첫 기간보다 앞이면 첫 기간을 씁니다. */
@@ -49,11 +49,11 @@ export function describeDueDay(dueDay: number): string {
 export function describeFee(plan: FeePlan): string {
   switch (plan.type) {
     case 'monthly':
-      return `월 ${formatWon(plan.amount)} · ${describeDueDay(plan.dueDay)}`
+      return `월 ${formatFee(plan.amount)} · ${describeDueDay(plan.dueDay)}`
     case 'sessions':
-      return `${plan.sessionCount}회 ${formatWon(plan.amount)}`
+      return `${plan.sessionCount}회 ${formatFee(plan.amount)}`
     case 'period':
-      return `${plan.months}개월 ${formatWon(plan.amount)}`
+      return `${plan.months}개월 ${formatFee(plan.amount)}`
   }
 }
 

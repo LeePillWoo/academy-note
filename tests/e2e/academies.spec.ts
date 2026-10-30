@@ -12,11 +12,11 @@ test('학원 추가, 수정(학기 중 일정 변경), 삭제', async ({ page },
   await page.getByRole('link', { name: '학원 추가' }).click()
   await page.getByRole('radio', { name: '둘째' }).check()
 
-  // 비워두고 저장하면 오류
+  // 비워두고 저장하면 오류 (수강료는 비워도 됨)
   await page.getByRole('button', { name: '저장' }).click()
   await expect(page.getByText('학원 이름을 입력하세요.')).toBeVisible()
   await expect(page.getByText('수업 요일을 하나 이상 고르세요.')).toBeVisible()
-  await expect(page.getByText('수강료 금액을 입력하세요.')).toBeVisible()
+  await expect(page.locator('.field-error')).toHaveCount(2)
 
   await page.getByLabel('학원 이름').fill('수학학원')
   await page.getByLabel('과목 (선택)').fill('수학')

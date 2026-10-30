@@ -1,8 +1,7 @@
 import type { Change, Database } from './types'
 
 /**
- * 학원을 지울 때 함께 지울 것들: 학원, 그 학원의 수업 기록(보강 출석 포함)과 보강.
- * 납부가 생기면 여기에 추가합니다.
+ * 학원을 지울 때 함께 지울 것들: 학원, 그 학원의 수업 기록(보강 출석 포함), 보강, 납부.
  */
 export function academyRemovalChanges(data: Database, academyId: string): Change[] {
   return [
@@ -12,6 +11,9 @@ export function academyRemovalChanges(data: Database, academyId: string): Change
     ...data.makeups
       .filter((makeup) => makeup.academyId === academyId)
       .map((makeup): Change => ({ type: 'remove', collection: 'makeups', id: makeup.id })),
+    ...data.payments
+      .filter((payment) => payment.academyId === academyId)
+      .map((payment): Change => ({ type: 'remove', collection: 'payments', id: payment.id })),
     { type: 'remove', collection: 'academies', id: academyId },
   ]
 }

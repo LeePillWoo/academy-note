@@ -21,3 +21,8 @@ export function parseAmount(text: string): number | null {
   if (!digits) return null
   return Number(digits)
 }
+
+/** 수강료 금액. 0이면 아직 정하지 않은 것으로 봅니다. */
+export function formatFee(value: number): string {
+  return value === 0 ? '금액 미정' : formatWon(value)
+}

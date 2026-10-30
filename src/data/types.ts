@@ -154,12 +154,41 @@ export interface Makeup extends BaseRecord {
   memo: string
 }
 
-/** 저장하는 데이터 종류입니다. 납부 같은 새 종류는 여기에 추가합니다. */
+// ===== 납부 =====
+
+/** 수강료, 교재비, 특강비, 기타 */
+export type PaymentKind = 'tuition' | 'textbook' | 'special' | 'other'
+
+/** 카드, 이체, 현금, 기타 */
+export type PaymentMethod = 'card' | 'transfer' | 'cash' | 'other'
+
+/**
+ * 납부 기록. 수강료 납부 항목은 학원의 수강료 방식에서 계산하고(paymentPlan.ts),
+ * 냈다고 기록한 것과 추가 납부(교재비 등)만 저장합니다.
+ */
+export interface Payment extends BaseRecord {
+  academyId: string
+  kind: PaymentKind
+  /** 계산한 수강료 항목과 맞추는 열쇠. 추가 납부는 없음 */
+  dueKey?: string
+  /** 이름. 예: '11월분', '1학기 교재' */
+  title: string
+  /** 낼 날 */
+  dueOn: DateStr
+  amount: number
+  /** 실제로 낸 날. 없으면 아직 안 냄 */
+  paidOn?: DateStr
+  method?: PaymentMethod
+  memo: string
+}
+
+/** 저장하는 데이터 종류입니다. 새 종류는 여기에 추가합니다. */
 export interface Collections {
   children: Child
   academies: Academy
   lessons: Lesson
   makeups: Makeup
+  payments: Payment
 }
 
 export type CollectionName = keyof Collections

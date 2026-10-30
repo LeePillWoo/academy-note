@@ -8,6 +8,8 @@ export default defineConfig({
   testDir: 'tests/e2e',
   outputDir: 'test-results',
   fullyParallel: true,
+  // 개발 서버가 처음 화면을 준비하는 시간까지 넉넉히
+  timeout: 60_000,
   reporter: 'list',
   use: {
     baseURL: `http://localhost:${PORT}`,

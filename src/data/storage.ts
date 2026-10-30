@@ -12,7 +12,7 @@ export interface DataStorage {
 }
 
 export function emptyDatabase(): Database {
-  return { children: [], academies: [], lessons: [], makeups: [] }
+  return { children: [], academies: [], lessons: [], makeups: [], payments: [] }
 }
 
 /** 저장에 성공한 변경을 화면에서 쓰는 데이터에 반영합니다. */

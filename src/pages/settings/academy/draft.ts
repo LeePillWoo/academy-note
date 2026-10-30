@@ -85,7 +85,7 @@ export function newAcademyDraft(childId: string, color: string): AcademyDraft {
 }
 
 function feeDraftFromPlan(plan: FeePlan, startedOn: DateStr): FeeDraft {
-  const base = { ...defaultFeeDraft(startedOn), type: plan.type, amountText: formatNumber(plan.amount) }
+  const base = { ...defaultFeeDraft(startedOn), type: plan.type, amountText: plan.amount ? formatNumber(plan.amount) : '' }
   switch (plan.type) {
     case 'monthly':
       return { ...base, dueDay: plan.dueDay }
@@ -166,9 +166,9 @@ export function validateDraft(draft: AcademyDraft): { errors: DraftErrors; input
     null
   if (scheduleProblem) errors.schedules = scheduleProblem
 
-  const amounts = draft.fees.map((period) => parseAmount(period.value.amountText))
-  const feeProblem =
-    periodStartsError(draft.fees, draft.startedOn) ?? (amounts.some((amount) => amount === null) ? '수강료 금액을 입력하세요.' : null)
+  // 금액을 비워두면 0(금액 미정)으로 저장합니다. 납부일은 그대로 계산하고, 낼 때 금액을 넣습니다.
+  const amounts = draft.fees.map((period) => parseAmount(period.value.amountText) ?? 0)
+  const feeProblem = periodStartsError(draft.fees, draft.startedOn)
   if (feeProblem) errors.fees = feeProblem
 
   const makeupProblem = slotsError(draft.makeupRule.slots)
@@ -190,7 +190,7 @@ export function validateDraft(draft: AcademyDraft): { errors: DraftErrors; input
       schedules: draft.schedules,
       fees: draft.fees.map((period, index) => ({
         ...period,
-        value: feePlanFromDraft(period.value, amounts[index]!, index === 0),
+        value: feePlanFromDraft(period.value, amounts[index], index === 0),
       })),
       makeupRule: draft.makeupRule,
     },

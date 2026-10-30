@@ -12,8 +12,12 @@ import { buildLessonViews, type LessonView } from '../data/lessonPlan'
 import { useLessons } from '../data/lessons'
 import { isOpenState, makeupState, urgencyKey } from '../data/makeupRules'
 import { useMakeups } from '../data/makeups'
+import { buildPaymentViews } from '../data/paymentPlan'
+import { useFeeContext, usePayments } from '../data/payments'
 import { useSelectedChild } from '../data/SelectedChild'
-import { formatDate, today } from '../utils/date'
+import { addDays, formatDate, today } from '../utils/date'
+import PaymentRow from '../components/PaymentRow'
+import PaymentSheet from '../components/PaymentSheet'
 
 export default function HomePage() {
   const { children } = useChildren()
@@ -32,6 +36,15 @@ export default function HomePage() {
       .filter((makeup) => ids.has(makeup.academyId) && isOpenState(makeupState(makeup, todayStr)))
       .sort((a, b) => urgencyKey(a).localeCompare(urgencyKey(b)))
   }, [academies, makeups, todayStr])
+  // 아직 안 낸 것 중 납부일이 지났거나 일주일 안에 낼 것
+  const feeContext = useFeeContext()
+  const { payments } = usePayments()
+  const [openPaymentKey, setOpenPaymentKey] = useState<string | null>(null)
+  const duePayments = useMemo(
+    () =>
+      buildPaymentViews(academies, payments, '0000-01-01', addDays(todayStr, 7), feeContext).filter((view) => view.status !== 'paid'),
+    [academies, payments, todayStr, feeContext],
+  )
 
   if (children.length === 0) {
     return (
@@ -105,11 +118,24 @@ export default function HomePage() {
           <Link to="/makeups" className="section-link">보강 전체 보기</Link>
         </div>
       )}
-      <div className="card">
-        <p className="muted">미납 학원은 다음 조각(납부)에서 이곳에 보여줍니다.</p>
-      </div>
+      {duePayments.length > 0 && (
+        <div className="home-section">
+          <h2 className="section-heading">
+            낼 돈 <span className="muted">{duePayments.length}개</span>
+          </h2>
+          <ul className="list">
+            {duePayments.slice(0, 5).map((view) => (
+              <li key={view.key}>
+                <PaymentRow view={view} onClick={() => setOpenPaymentKey(view.key)} />
+              </li>
+            ))}
+          </ul>
+          <Link to="/payments" className="section-link">납부 전체 보기</Link>
+        </div>
+      )}
       <LessonSheet view={editing} onClose={() => setEditing(null)} />
       <MakeupSheet makeup={makeups.find((makeup) => makeup.id === openMakeupId) ?? null} onClose={() => setOpenMakeupId(null)} />
+      <PaymentSheet view={duePayments.find((view) => view.key === openPaymentKey) ?? null} onClose={() => setOpenPaymentKey(null)} />
     </section>
   )
 }

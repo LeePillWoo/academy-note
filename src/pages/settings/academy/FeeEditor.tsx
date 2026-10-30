@@ -1,8 +1,8 @@
+import AmountInput from '../../../components/AmountInput'
 import DateField from '../../../components/DateField'
 import Segmented from '../../../components/Segmented'
 import { ABSENCE_COUNTING_LABELS, FEE_PLAN_LABELS } from '../../../data/academyRules'
 import type { AbsenceCounting, FeePlanType } from '../../../data/types'
-import { formatNumber, formatWon, parseAmount } from '../../../utils/money'
 import type { FeeDraft } from './draft'
 
 interface FeeEditorProps {
@@ -19,7 +19,6 @@ const range = (from: number, to: number) => Array.from({ length: to - from + 1 }
 /** 수강료 방식 하나를 입력합니다. (월 / 회차 / 기간 단위) */
 export default function FeeEditor({ idPrefix, value, onChange, isFirst }: FeeEditorProps) {
   const set = (patch: Partial<FeeDraft>) => onChange({ ...value, ...patch })
-  const amount = parseAmount(value.amountText)
 
   return (
     <div className="form-stack">
@@ -35,23 +34,8 @@ export default function FeeEditor({ idPrefix, value, onChange, isFirst }: FeeEdi
         <label className="field-label" htmlFor={`${idPrefix}-amount`}>
           {value.type === 'monthly' ? '한 달 금액' : value.type === 'sessions' ? `${value.sessionCount}회 금액` : `${value.months}개월 금액`}
         </label>
-        <div className="input-with-unit">
-          <input
-            id={`${idPrefix}-amount`}
-            className="input"
-            inputMode="numeric"
-            autoComplete="off"
-            placeholder="예: 250,000"
-            value={value.amountText}
-            // 입력하는 대로 쉼표를 넣어 자릿수를 읽기 쉽게 합니다.
-            onChange={(event) => {
-              const parsed = parseAmount(event.target.value)
-              set({ amountText: parsed === null ? '' : formatNumber(parsed) })
-            }}
-          />
-          <span className="unit">원</span>
-        </div>
-        {amount !== null && amount >= 10_000 && <p className="muted">{formatWon(amount)}</p>}
+        <AmountInput id={`${idPrefix}-amount`} value={value.amountText} onChange={(amountText) => set({ amountText })} />
+        {!value.amountText && <p className="muted">비워두면 "금액 미정"으로 저장합니다. 낼 때 금액을 넣으면 됩니다.</p>}
       </div>
 
       {value.type === 'monthly' && (

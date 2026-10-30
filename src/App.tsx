@@ -3,7 +3,7 @@ import AppShell from './layout/AppShell'
 import CalendarPage from './pages/CalendarPage'
 import HomePage from './pages/HomePage'
 import MakeupsPage from './pages/MakeupsPage'
-import PlaceholderPage from './pages/PlaceholderPage'
+import PaymentsPage from './pages/PaymentsPage'
 import AcademiesPage from './pages/settings/AcademiesPage'
 import AcademyFormPage from './pages/settings/academy/AcademyFormPage'
 import ChildFormPage from './pages/settings/ChildFormPage'
@@ -16,7 +16,7 @@ export default function App() {
       <Route element={<AppShell />}>
         <Route index element={<HomePage />} />
         <Route path="calendar" element={<CalendarPage />} />
-        <Route path="payments" element={<PlaceholderPage title="납부" description="학원별 납부 내역과 미납, 월별 합계를 보여줍니다." />} />
+        <Route path="payments" element={<PaymentsPage />} />
         <Route path="makeups" element={<MakeupsPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="settings/children" element={<ChildrenPage />} />
