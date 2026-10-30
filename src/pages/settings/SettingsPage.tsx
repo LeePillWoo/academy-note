@@ -13,7 +13,7 @@ export default function SettingsPage() {
 
   return (
     <section className="narrow">
-      <PageHeader title="설정" />
+      <PageHeader title="설정" subtitle="자녀와 학원 정보를 관리하세요." />
       <ul className="list">
         <li>
           <Link to="/settings/children" className="list-row list-link">

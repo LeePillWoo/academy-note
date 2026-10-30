@@ -1,6 +1,6 @@
 import { useMemo, useState, type CSSProperties } from 'react'
 import { Link, useSearchParams } from 'react-router'
-import { readableTextColor } from '../components/ChildTag'
+import { softColorVars } from '../data/colors'
 import { BackIcon, ChevronRightIcon, PlusIcon } from '../components/icons'
 import LessonRow from '../components/LessonRow'
 import LessonSheet from '../components/LessonSheet'
@@ -203,7 +203,7 @@ export default function CalendarPage() {
   if (academies.length === 0) {
     return (
       <section className="narrow">
-        <PageHeader title="달력" />
+        <PageHeader title="달력" subtitle="학원의 모든 일정을 한눈에 관리하세요." />
         <div className="card">
           <p>등록된 학원이 없습니다. 학원을 등록하면 수업일이 달력에 표시됩니다.</p>
           <Link to="/settings/academies/new" className="btn btn-primary">
@@ -218,14 +218,11 @@ export default function CalendarPage() {
   const { year, month: monthNumber } = dateParts(selected)
   const navTitle =
     mode === 'month' ? `${year}년 ${monthNumber}월` : mode === 'week' ? weekTitle(from, to) : formatDate(selected, { withYear: true })
-  const showToday = mode === 'month' ? startOfMonth(selected) !== startOfMonth(todayStr) || selected !== todayStr
-    : mode === 'week' ? from !== startOfWeek(todayStr)
-    : selected !== todayStr
+  const showingToday = selected === todayStr
 
+  // 왼쪽: [‹ 2026년 11월 ›], 오른쪽: [오늘로]
   const navigation = (
     <div className="calendar-toolbar">
-      <Segmented<CalendarMode> label="달력 보기" name="calendar-mode" value={mode} options={MODE_OPTIONS}
-        onChange={(value) => update({ mode: value })} />
       <div className="month-nav">
         <button type="button" className="icon-btn" onClick={() => move(-1)}
           aria-label={mode === 'month' ? '이전 달' : mode === 'week' ? '이전 주' : '이전 날'}>
@@ -237,17 +234,23 @@ export default function CalendarPage() {
           <ChevronRightIcon />
         </button>
       </div>
-      {showToday && (
-        <button type="button" className="btn btn-secondary btn-small today-btn" onClick={() => update({ date: todayStr })}>
-          오늘로
-        </button>
-      )}
+      <button type="button" className="btn btn-secondary btn-small today-btn" disabled={showingToday}
+        onClick={() => update({ date: todayStr })}>
+        오늘로
+      </button>
     </div>
   )
 
   return (
     <section>
-      <PageHeader title="달력" />
+      <PageHeader
+        title="달력"
+        subtitle="학원의 모든 일정을 한눈에 관리하세요."
+        actions={
+          <Segmented<CalendarMode> label="달력 보기" name="calendar-mode" value={mode} options={MODE_OPTIONS}
+            onChange={(value) => update({ mode: value })} />
+        }
+      />
 
       {mode === 'month' && (
         <div className="calendar-layout">
@@ -280,7 +283,7 @@ export default function CalendarPage() {
                       const classes = ['cal-chip', item.missed && 'is-missed', item.makeup && 'is-makeup'].filter(Boolean).join(' ')
                       return (
                         <span key={item.key} className={classes}
-                          style={{ '--chip': color, '--chip-text': readableTextColor(color) } as CSSProperties}>
+                          style={softColorVars(color) as CSSProperties}>
                           {item.time && <span className="cal-chip-time">{item.time}</span>}
                           {academyById.get(item.academyId)?.name}
                         </span>
@@ -295,7 +298,7 @@ export default function CalendarPage() {
               {colorByChild &&
                 children.map((child) => (
                   <span key={child.id} className="legend-item">
-                    <span className="legend-swatch" style={{ background: child.color }} />
+                    <span className="legend-swatch" style={softColorVars(child.color) as CSSProperties} />
                     {child.name}
                   </span>
                 ))}

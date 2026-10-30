@@ -34,7 +34,7 @@ export default function MakeupsPage() {
   if (academies.length === 0) {
     return (
       <section className="narrow">
-        <PageHeader title="보강" />
+        <PageHeader title="보강" subtitle="빠진 수업의 보강을 챙기세요." />
         <div className="card">
           <p>등록된 학원이 없습니다.</p>
           <Link to="/settings/academies/new" className="btn btn-primary">
@@ -58,7 +58,7 @@ export default function MakeupsPage() {
 
   return (
     <section className="narrow">
-      <PageHeader title="보강" />
+      <PageHeader title="보강" subtitle="빠진 수업의 보강을 챙기세요." />
 
       <div className="home-section">
         <h2 className="section-heading">남은 보강 <span className="muted">{groups.open.length}개</span></h2>

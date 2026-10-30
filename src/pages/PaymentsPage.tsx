@@ -49,7 +49,7 @@ export default function PaymentsPage() {
   if (academies.length === 0) {
     return (
       <section className="narrow">
-        <PageHeader title="납부" />
+        <PageHeader title="납부" subtitle="학원비 낸 것과 낼 것을 관리하세요." />
         <div className="card">
           <p>등록된 학원이 없습니다.</p>
           <Link to="/settings/academies/new" className="btn btn-primary">
@@ -73,7 +73,7 @@ export default function PaymentsPage() {
 
   return (
     <section className="narrow">
-      <PageHeader title="납부" />
+      <PageHeader title="납부" subtitle="학원비 낸 것과 낼 것을 관리하세요." />
 
       <div className="card">
         <div className="month-nav">

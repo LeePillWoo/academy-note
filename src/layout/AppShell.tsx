@@ -3,10 +3,9 @@ import { useChildren } from '../data/children'
 import { useSelectedChild } from '../data/SelectedChild'
 import { navItems } from './navItems'
 
-// 화면 너비에 따라 메뉴 위치가 바뀝니다. (index.css 참고)
-// - 휴대폰 세로: 아래쪽 탭 메뉴
-// - 휴대폰 가로, 태블릿: 왼쪽 좁은 메뉴
-// - PC: 왼쪽 넓은 메뉴
+// 화면 방향에 따라 메뉴 위치가 바뀝니다. (index.css 참고)
+// - 세로 화면(휴대폰): 아래쪽 탭 메뉴
+// - 가로 화면(PC, 휴대폰 가로): 왼쪽 메뉴
 export default function AppShell() {
   const { children } = useChildren()
   // 자녀가 2명 이상일 때만 자녀 선택을 보여줍니다.
@@ -15,17 +14,22 @@ export default function AppShell() {
   return (
     <div className="shell">
       <nav className="nav" aria-label="주 메뉴">
-        <div className="nav-brand">학원노트</div>
+        <div className="nav-brand">
+          <Logo />
+        </div>
         {navItems.map((item) => (
           <NavLink key={item.to} to={item.to} end={item.to === '/'} className="nav-item">
-            {item.icon}
+            <span className="nav-icon">{item.icon}</span>
             <span className="nav-label">{item.label}</span>
           </NavLink>
         ))}
       </nav>
       <div className="main">
         <header className={showSwitcher ? 'topbar has-switcher' : 'topbar'}>
-          <span className="topbar-brand">학원노트</span>
+          <span className="topbar-brand">
+            <Logo />
+            <span className="brand-text">학원노트</span>
+          </span>
           {showSwitcher && <ChildSwitcher />}
         </header>
         <main className="content">
@@ -33,6 +37,14 @@ export default function AppShell() {
         </main>
       </div>
     </div>
+  )
+}
+
+function Logo() {
+  return (
+    <span className="logo" aria-label="학원노트" role="img">
+      학
+    </span>
   )
 }
 

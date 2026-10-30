@@ -49,7 +49,7 @@ export default function HomePage() {
   if (children.length === 0) {
     return (
       <section className="narrow">
-        <PageHeader title="홈" />
+        <PageHeader title="홈" subtitle="오늘 할 일을 한눈에 확인하세요." />
         <div className="card">
           <h2 className="card-title">학원노트에 오신 것을 환영합니다</h2>
           <p>먼저 자녀를 등록하세요. 자녀마다 학원과 납부, 출석, 보강을 따로 관리할 수 있습니다.</p>
@@ -65,7 +65,7 @@ export default function HomePage() {
   if (academies.length === 0) {
     return (
       <section className="narrow">
-        <PageHeader title="홈" />
+        <PageHeader title="홈" subtitle="오늘 할 일을 한눈에 확인하세요." />
         <div className="card">
           <h2 className="card-title">
             {selectedChild && <span className="dot" style={{ background: selectedChild.color }} />}
@@ -83,7 +83,7 @@ export default function HomePage() {
 
   return (
     <section className="narrow">
-      <PageHeader title="홈" />
+      <PageHeader title="홈" subtitle="오늘 할 일을 한눈에 확인하세요." />
       <div className="home-section">
         <h2 className="section-heading">
           오늘 수업 <span className="muted">{formatDate(todayStr)}</span>
