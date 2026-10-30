@@ -52,6 +52,7 @@ export default function AcademiesPage() {
                       <span className="list-text">
                         <span className="list-title">{academy.name}</span>
                         <span className="list-sub">
+                          {academy.subject && `${academy.subject} · `}
                           {describeSlots(periodAt(academy.schedules, now))} · {describeFee(periodAt(academy.fees, now))}
                         </span>
                       </span>

@@ -26,12 +26,32 @@ export interface AcademyDraft {
   childId: string
   name: string
   color: string
+  /** 학원 정보 (선택). 비워두면 저장하지 않습니다. */
+  info: AcademyInfo
   memo: string
   startedOn: DateStr
   endedOn?: DateStr
   schedules: Period<TimeSlot[]>[]
   fees: Period<FeeDraft>[]
   makeupRule: MakeupRule
+}
+
+export interface AcademyInfo {
+  subject: string
+  teacher: string
+  phone: string
+  address: string
+}
+
+const emptyInfo = (): AcademyInfo => ({ subject: '', teacher: '', phone: '', address: '' })
+
+/** 비어 있는 정보는 빼고 저장합니다. */
+function cleanInfo(info: AcademyInfo): Partial<AcademyInfo> {
+  return Object.fromEntries(
+    Object.entries(info)
+      .map(([key, value]) => [key, value.trim()])
+      .filter(([, value]) => value),
+  )
 }
 
 export type DraftErrors = Partial<Record<'name' | 'schedules' | 'fees' | 'makeup', string>>
@@ -55,6 +75,7 @@ export function newAcademyDraft(childId: string, color: string): AcademyDraft {
     childId,
     name: '',
     color,
+    info: emptyInfo(),
     memo: '',
     startedOn,
     schedules: [{ id: newId(), startsOn: startedOn, value: [] }],
@@ -81,6 +102,12 @@ export function draftFromAcademy(academy: Academy): AcademyDraft {
     childId: academy.childId,
     name: academy.name,
     color: academy.color,
+    info: {
+      subject: academy.subject ?? '',
+      teacher: academy.teacher ?? '',
+      phone: academy.phone ?? '',
+      address: academy.address ?? '',
+    },
     memo: academy.memo,
     startedOn: academy.startedOn,
     endedOn: academy.endedOn,
@@ -156,6 +183,7 @@ export function validateDraft(draft: AcademyDraft): { errors: DraftErrors; input
       childId: draft.childId,
       name,
       color: draft.color,
+      ...cleanInfo(draft.info),
       memo: draft.memo.trim(),
       startedOn: draft.startedOn,
       endedOn: draft.endedOn,

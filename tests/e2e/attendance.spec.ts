@@ -16,11 +16,12 @@ test('출석 체크: 오늘 결석 기록, 지난 수업 자동 출석, 휴강 �
   await addDailyAcademy(page, { childName: '둘째', name: '피아노', start: '18:00', end: '19:00' })
   const sheet = page.getByRole('dialog', { name: '수업 기록' })
 
-  // 홈: 오늘 수업 두 개 (전체 보기라 자녀 이름도 보임)
+  // 홈: 오늘 수업 두 개 (전체 보기라 자녀 태그가 붙음)
   await page.goto('/')
   const todayRows = page.locator('.home-section').first().locator('.list-button')
   await expect(todayRows).toHaveCount(2)
-  await expect(todayRows.first()).toContainText('수학학원 · 첫째')
+  await expect(todayRows.first()).toContainText('수학학원')
+  await expect(todayRows.first().locator('.child-tag')).toHaveText('첫째')
   await expect(todayRows.first()).toContainText('예정')
 
   // 오늘 수학학원 결석 기록
@@ -35,12 +36,20 @@ test('출석 체크: 오늘 결석 기록, 지난 수업 자동 출석, 휴강 �
   await expect(todayRows.first()).toContainText('감기')
   await page.screenshot({ path: testInfo.outputPath('2-home-today.png') })
 
-  // 달력: 오늘 칸의 점 하나는 속이 빈 점(결석)
+  // 달력(전체): 오늘 칸에 자녀 태그 두 개, 결석한 첫째는 속이 빈 태그
   await page.getByRole('navigation', { name: '주 메뉴' }).getByRole('link', { name: '달력' }).click()
   const todayCell = page.locator('.is-calendar .day.is-today')
-  await expect(todayCell.locator('.day-dot')).toHaveCount(2)
-  await expect(todayCell.locator('.day-dot.is-missed')).toHaveCount(1)
+  await expect(todayCell.locator('.mini-tag')).toHaveText(['첫', '둘'])
+  await expect(todayCell.locator('.mini-tag.is-missed')).toHaveText('첫')
+  await expect(page.locator('.calendar-legend')).toContainText('첫째')
   await expectNoHorizontalOverflow(page)
+  await page.screenshot({ path: testInfo.outputPath('2b-calendar-tags.png') })
+
+  // 자녀 하나를 고르면 태그 대신 학원 점
+  await page.getByRole('group', { name: '자녀 선택' }).getByRole('button', { name: '첫째' }).click()
+  await expect(todayCell.locator('.mini-tag')).toHaveCount(0)
+  await expect(todayCell.locator('.day-dot.is-missed')).toHaveCount(1)
+  await page.getByRole('group', { name: '자녀 선택' }).getByRole('button', { name: '전체' }).click()
 
   // 어제: 기록하지 않았으니 출석(자동)
   await page.goto(`/#/calendar?date=${await yesterdayIn(page)}`)
@@ -68,5 +77,5 @@ test('출석 체크: 오늘 결석 기록, 지난 수업 자동 출석, 휴강 �
   await page.getByRole('group', { name: '자녀 선택' }).getByRole('button', { name: '둘째' }).click()
   await expect(dayRows).toHaveCount(1)
   await expect(dayRows.first()).toContainText('피아노')
-  await expect(dayRows.first()).not.toContainText('· 둘째')
+  await expect(dayRows.first().locator('.child-tag')).toHaveCount(0)
 })

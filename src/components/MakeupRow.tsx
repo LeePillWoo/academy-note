@@ -4,6 +4,7 @@ import { MAKEUP_STATE_LABELS, describeDeadline, makeupState } from '../data/make
 import { useSelectedChild } from '../data/SelectedChild'
 import type { Makeup } from '../data/types'
 import { formatDate, today } from '../utils/date'
+import ChildTag from './ChildTag'
 
 export const REASON_LABELS: Record<Makeup['reason'], string> = { absent: '결석', cancelled: '휴강' }
 
@@ -33,8 +34,8 @@ export default function MakeupRow({ makeup, onClick }: { makeup: Makeup; onClick
       <span className="dot" style={{ background: academy.color }} />
       <span className="list-text">
         <span className="list-title">
+          {child && <ChildTag child={child} />}
           {academy.name}
-          {child && <span className="muted"> · {child.name}</span>}
         </span>
         <span className="list-sub">
           {formatDate(makeup.missedOn)} {REASON_LABELS[makeup.reason]}분 · {detail}

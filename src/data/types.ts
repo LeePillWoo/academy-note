@@ -88,6 +88,13 @@ export interface Academy extends BaseRecord {
   childId: string
   name: string
   color: string
+  /** 과목. 예: 수학, 피아노 */
+  subject?: string
+  /** 선생님. 예: 김OO 원장님 */
+  teacher?: string
+  /** 연락처 (누르면 전화) */
+  phone?: string
+  address?: string
   memo: string
   /** 화면에 보이는 순서 (작을수록 앞) */
   order: number

@@ -1352,3 +1352,81 @@ details > summary.summary {
   width: auto;
   white-space: nowrap;
 }
+
+/* ===== 자녀 태그 ===== */
+/* 목록에서: 자녀 색 점과 이름 */
+.child-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-right: 0.375rem;
+  padding: 0 0.5rem;
+  color: var(--color-text);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.5rem;
+  vertical-align: 0.0625rem;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+}
+
+.child-tag .dot {
+  width: 0.5rem;
+  height: 0.5rem;
+}
+
+/* 달력 칸에서: 자녀 색 바탕에 이름 첫 글자. 결석·휴강만 있는 날은 속이 빈 태그 */
+.day-tags {
+  display: flex;
+  gap: 0.125rem;
+}
+
+.mini-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.125rem;
+  height: 1.125rem;
+  padding: 0 0.125rem;
+  color: var(--tag-text);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1;
+  background: var(--tag);
+  border: 1.5px solid var(--tag);
+  border-radius: 0.3125rem;
+}
+
+.mini-tag.is-missed {
+  color: var(--color-text);
+  background: transparent;
+}
+
+.calendar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem 0.875rem;
+  padding: 0.25rem 0.25rem 0;
+  font-size: 0.8125rem;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+/* ===== 학원 정보 두 칸 (넓으면 나란히, 좁으면 위아래) ===== */
+.field-pair {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 1rem;
+}
+
+.sheet-badges {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}

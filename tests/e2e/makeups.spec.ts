@@ -9,7 +9,7 @@ test.beforeEach(async ({ page }) => {
 test('보강: 결석하면 생기고, 날짜 잡기(규칙 경고), 완료와 취소, 보강 안 함, 기한 만료', async ({ page }, testInfo) => {
   await addChildren(page, ['첫째'])
   // 10월 1일부터 매일 16:00~17:00, 보강은 토요일 10:00~12:00, 결석일로부터 14일 이내(기본)
-  await addDailyAcademy(page, { name: '수학학원', start: '16:00', end: '17:00', makeupDays: ['토'] })
+  await addDailyAcademy(page, { name: '수학학원', start: '16:00', end: '17:00', makeupDays: ['토'], phone: '02-123-4567' })
 
   const lessonSheet = page.getByRole('dialog', { name: '수업 기록' })
   const makeupSheet = page.getByRole('dialog', { name: '보강' })
@@ -40,6 +40,7 @@ test('보강: 결석하면 생기고, 날짜 잡기(규칙 경고), 완료와 �
   // ── 날짜 잡기: 목요일은 보강 가능 요일이 아니라는 안내 ──
   await homeMakeups.first().click()
   await expect(makeupSheet).toBeVisible()
+  await expect(makeupSheet.getByRole('link', { name: '전화하기' })).toHaveAttribute('href', 'tel:021234567')
   await pickDate(page, '보강 날짜', '2026년 11월 5일 (목)')
   await expect(makeupSheet.getByRole('list', { name: '확인할 점' })).toContainText('보강 가능 요일이 아닙니다. (가능: 토 10:00~12:00)')
 

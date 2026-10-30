@@ -19,6 +19,8 @@ test('학원 추가, 수정(학기 중 일정 변경), 삭제', async ({ page },
   await expect(page.getByText('수강료 금액을 입력하세요.')).toBeVisible()
 
   await page.getByLabel('학원 이름').fill('수학학원')
+  await page.getByLabel('과목 (선택)').fill('수학')
+  await page.getByLabel('연락처 (선택)').fill('02-123-4567')
   await expect(page.getByText('학원 이름을 입력하세요.')).toHaveCount(0)
 
   // 월요일 시간을 정하면 수·금은 같은 시간으로 채워짐
@@ -42,7 +44,7 @@ test('학원 추가, 수정(학기 중 일정 변경), 삭제', async ({ page },
 
   await expect(academyRows).toHaveCount(1)
   await expect(academyRows.first()).toContainText('수학학원')
-  await expect(academyRows.first()).toContainText('월·수·금 17:00~18:30 · 월 25만 원 · 매월 5일')
+  await expect(academyRows.first()).toContainText('수학 · 월·수·금 17:00~18:30 · 월 25만 원 · 매월 5일')
 
   // ── 첫째의 영어학원 (회차 단위) ──
   await page.getByRole('link', { name: '학원 추가' }).click()

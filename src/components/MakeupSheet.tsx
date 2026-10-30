@@ -82,8 +82,14 @@ export function MakeupEditor({ makeup, onDone }: { makeup: Makeup; onDone(): voi
       <p className="muted">
         {formatDate(makeup.missedOn)} {REASON_LABELS[makeup.reason]}분 · 기한: {describeDeadline(makeup.deadline, todayStr)}
       </p>
-      <p>
+      <p className="sheet-badges">
         <span className={`badge makeup-${state}`}>{MAKEUP_STATE_LABELS[state]}</span>
+        {academy.phone && (
+          // 보강 날짜를 잡으려고 학원에 전화할 때가 많아서 바로 걸 수 있게 합니다.
+          <a className="btn btn-secondary btn-small" href={`tel:${academy.phone.replace(/[^\d+]/g, '')}`}>
+            전화하기
+          </a>
+        )}
       </p>
     </div>
   )

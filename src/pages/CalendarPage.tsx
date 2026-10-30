@@ -8,6 +8,9 @@ import MakeupSheet from '../components/MakeupSheet'
 import MonthGrid from '../components/MonthGrid'
 import PageHeader from '../components/PageHeader'
 import { useScopedAcademies } from '../data/academies'
+import { useChildren } from '../data/children'
+import { useSelectedChild } from '../data/SelectedChild'
+import { MiniChildTag } from '../components/ChildTag'
 import { buildLessonViews, type LessonView } from '../data/lessonPlan'
 import { useLessons } from '../data/lessons'
 import { useMakeups } from '../data/makeups'
@@ -27,6 +30,8 @@ export default function CalendarPage() {
   const [editing, setEditing] = useState<LessonView | null>(null)
   const [openMakeupId, setOpenMakeupId] = useState<string | null>(null)
   const academies = useScopedAcademies()
+  const { children } = useChildren()
+  const { selectedChildId } = useSelectedChild()
   const { lessons } = useLessons()
   const { makeups } = useMakeups()
 
@@ -56,6 +61,22 @@ export default function CalendarPage() {
     [selected, from, to, byDate, academies, lessons, todayStr],
   )
   const colorOf = (academyId: string) => academies.find((academy) => academy.id === academyId)?.color
+
+  // 전체 보기이고 자녀가 2명 이상이면 달력 칸에 학원 점 대신 자녀 태그를 붙입니다.
+  const showChildTags = !selectedChildId && children.length > 1
+  const childIdOf = (academyId: string) => academies.find((academy) => academy.id === academyId)?.childId
+  /** 그날 수업이나 보강 예정이 있는 자녀. 결석·휴강만 있으면 missed */
+  function childrenOn(date: DateStr) {
+    const views = byDate.get(date) ?? []
+    const planned = scheduledByDate.get(date) ?? []
+    return children.flatMap((child) => {
+      const mine = views.filter((view) => childIdOf(view.academyId) === child.id)
+      const myMakeups = planned.filter((makeup) => childIdOf(makeup.academyId) === child.id)
+      if (mine.length + myMakeups.length === 0) return []
+      const missed = myMakeups.length === 0 && mine.every((view) => view.status === 'absent' || view.status === 'cancelled')
+      return [{ child, missed }]
+    })
+  }
 
   function select(date: DateStr) {
     setParams({ date }, { replace: true })
@@ -101,12 +122,23 @@ export default function CalendarPage() {
             describeDay={(date) => {
               const lessonCount = byDate.get(date)?.length
               const makeupCount = scheduledByDate.get(date)?.length
-              return [lessonCount && `수업 ${lessonCount}개`, makeupCount && `보강 예정 ${makeupCount}개`].filter(Boolean).join(', ') || undefined
+              const names = showChildTags ? childrenOn(date).map(({ child }) => child.name).join('·') : ''
+              return [names, lessonCount && `수업 ${lessonCount}개`, makeupCount && `보강 예정 ${makeupCount}개`].filter(Boolean).join(', ') || undefined
             }}
             renderDay={(date) => {
               const views = byDate.get(date) ?? []
               const planned = scheduledByDate.get(date) ?? []
               if (views.length + planned.length === 0) return null
+              // 전체 보기: 그날 수업이나 보강이 있는 자녀를 태그로
+              if (showChildTags) {
+                return (
+                  <span className="day-tags" aria-hidden="true">
+                    {childrenOn(date).slice(0, 3).map(({ child, missed }) => (
+                      <MiniChildTag key={child.id} child={child} missed={missed} />
+                    ))}
+                  </span>
+                )
+              }
               // 결석·휴강은 속이 빈 점, 보강 예정은 네모 점
               return (
                 <span className="day-dots" aria-hidden="true">
@@ -122,6 +154,17 @@ export default function CalendarPage() {
               )
             }}
           />
+          {showChildTags && (
+            <div className="calendar-legend">
+              {children.map((child) => (
+                <span key={child.id} className="legend-item">
+                  <MiniChildTag child={child} missed={false} />
+                  {child.name}
+                </span>
+              ))}
+              <span className="legend-item muted">속이 빈 태그: 결석·휴강</span>
+            </div>
+          )}
           {(selected !== todayStr || from !== startOfMonth(todayStr)) && (
             <button type="button" className="btn btn-secondary btn-small" onClick={() => select(todayStr)}>
               오늘로

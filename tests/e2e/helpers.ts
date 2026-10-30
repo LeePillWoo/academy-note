@@ -35,6 +35,7 @@ interface DailyAcademyOptions {
   end: string
   /** 보강 가능 요일 (기본 시간 10:00~12:00) */
   makeupDays?: string[]
+  phone?: string
 }
 
 /** 매일 수업하는 학원을 지난달 1일부터 다닌 것으로 등록합니다. (오늘과 어제가 항상 수업일) */
@@ -52,6 +53,7 @@ export async function addDailyAcademy(page: Page, options: DailyAcademyOptions) 
   await toggleWeekdays(page, '수업', ALL_DAYS.slice(1))
   await page.getByLabel('한 달 금액').fill('200000')
   if (options.makeupDays) await toggleWeekdays(page, '보강', options.makeupDays)
+  if (options.phone) await page.getByLabel('연락처 (선택)').fill(options.phone)
   await page.getByRole('button', { name: '저장' }).click()
   await expect(page.getByRole('heading', { name: '학원 추가' })).toHaveCount(0)
 }

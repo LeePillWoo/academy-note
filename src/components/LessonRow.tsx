@@ -2,6 +2,7 @@ import { useAcademies } from '../data/academies'
 import { useChildren } from '../data/children'
 import type { LessonView } from '../data/lessonPlan'
 import { useSelectedChild } from '../data/SelectedChild'
+import ChildTag from './ChildTag'
 import LessonStatusBadge from './LessonStatusBadge'
 
 interface LessonRowProps {
@@ -24,8 +25,8 @@ export default function LessonRow({ view, onClick }: LessonRowProps) {
       <span className="dot" style={{ background: academy.color }} />
       <span className="list-text">
         <span className="list-title">
+          {child && <ChildTag child={child} />}
           {academy.name}
-          {child && <span className="muted"> · {child.name}</span>}
         </span>
         <span className="list-sub">
           {time}

@@ -68,6 +68,7 @@ function AcademyForm({ academyId }: { academyId?: string }) {
   }
 
   const set = (patch: Partial<AcademyDraft>) => setDraft((prev) => ({ ...prev, ...patch }))
+  const setInfo = (patch: Partial<AcademyDraft['info']>) => setDraft((prev) => ({ ...prev, info: { ...prev.info, ...patch } }))
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault()
@@ -141,6 +142,32 @@ function AcademyForm({ academyId }: { academyId?: string }) {
             <legend className="field-label">표시 색상</legend>
             <ColorPicker name="academy-color" value={draft.color} onChange={(color) => set({ color })} />
           </fieldset>
+
+          <div className="field-pair">
+            <div className="field">
+              <label className="field-label" htmlFor="academy-subject">과목 (선택)</label>
+              <input id="academy-subject" className="input" value={draft.info.subject} maxLength={20} placeholder="예: 수학"
+                autoComplete="off" onChange={(event) => setInfo({ subject: event.target.value })} />
+            </div>
+            <div className="field">
+              <label className="field-label" htmlFor="academy-teacher">선생님 (선택)</label>
+              <input id="academy-teacher" className="input" value={draft.info.teacher} maxLength={20} placeholder="예: 김OO 원장님"
+                autoComplete="off" onChange={(event) => setInfo({ teacher: event.target.value })} />
+            </div>
+          </div>
+
+          <div className="field">
+            <label className="field-label" htmlFor="academy-phone">연락처 (선택)</label>
+            <input id="academy-phone" className="input" type="tel" inputMode="tel" value={draft.info.phone} maxLength={20}
+              placeholder="예: 02-123-4567" autoComplete="off" onChange={(event) => setInfo({ phone: event.target.value })} />
+            <p className="muted">넣어두면 보강 창에서 바로 전화할 수 있습니다.</p>
+          </div>
+
+          <div className="field">
+            <label className="field-label" htmlFor="academy-address">주소 (선택)</label>
+            <input id="academy-address" className="input" value={draft.info.address} maxLength={100}
+              placeholder="예: OO동 OO빌딩 3층" autoComplete="off" onChange={(event) => setInfo({ address: event.target.value })} />
+          </div>
 
           <div className="field">
             <label className="field-label" htmlFor="academy-started">수강 시작일</label>
