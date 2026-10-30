@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { getFamilyState, setFamilyState } from './cloud/family'
 import { createIndexedDbStorage } from './indexedDbStorage'
 import { applyChanges, emptyDatabase, type DataStorage } from './storage'
 import type { Change, Database } from './types'
@@ -17,9 +18,20 @@ const DataContext = createContext<DataContextValue | null>(null)
 
 let storagePromise: Promise<DataStorage> | undefined
 
-// 3단계에서 APK로 실행 중이면 SQLite 저장소를 고르도록 바꿉니다.
-function getStorage() {
-  storagePromise ??= createIndexedDbStorage()
+/**
+ * 저장소 고르기.
+ * - 가족 코드가 있으면 가족 공유(Firestore). Firebase 코드는 이때만 불러옵니다.
+ * - 없으면 혼자 쓰기(IndexedDB). 네트워크를 전혀 쓰지 않습니다.
+ */
+function getStorage(): Promise<DataStorage> {
+  storagePromise ??= (async () => {
+    const family = getFamilyState()
+    if (family) {
+      const { createFirestoreStorage } = await import('./cloud/firestoreStorage')
+      return createFirestoreStorage(family.id)
+    }
+    return createIndexedDbStorage()
+  })()
   return storagePromise
 }
 
@@ -30,18 +42,24 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false
+    let unsubscribe: (() => void) | undefined
     getStorage()
       .then(async (storage) => {
         const loaded = await storage.loadAll()
         if (cancelled) return
         setData(loaded)
         setLoad({ status: 'ready', storage })
+        // 가족 공유: 다른 기기에서 바뀐 내용을 그대로 반영합니다.
+        unsubscribe = storage.subscribe?.((remote) => {
+          if (!cancelled) setData(remote)
+        })
       })
       .catch((error: unknown) => {
-        if (!cancelled) setLoad({ status: 'error', message: String(error) })
+        if (!cancelled) setLoad({ status: 'error', message: error instanceof Error ? error.message : String(error) })
       })
     return () => {
       cancelled = true
+      unsubscribe?.()
     }
   }, [])
 
@@ -60,6 +78,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     return <div className="status-screen">불러오는 중…</div>
   }
   if (load.status === 'error' || !value) {
+    const family = getFamilyState()
     return (
       <div className="status-screen">
         <p>데이터를 불러오지 못했습니다.</p>
@@ -67,6 +86,19 @@ export function DataProvider({ children }: { children: ReactNode }) {
         <button type="button" className="btn btn-primary" onClick={() => window.location.reload()}>
           다시 시도
         </button>
+        {family && (
+          <button
+            type="button"
+            className="btn btn-secondary"
+            onClick={() => {
+              // 가족 공유에 연결하지 못할 때 폰에 있던 데이터로 돌아갈 수 있게
+              setFamilyState(null)
+              window.location.reload()
+            }}
+          >
+            혼자 쓰기로 돌아가기
+          </button>
+        )}
       </div>
     )
   }

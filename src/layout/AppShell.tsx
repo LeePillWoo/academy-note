@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from 'react-router'
 import { useChildren } from '../data/children'
 import { useSelectedChild } from '../data/SelectedChild'
+import { useTodayTick } from '../hooks/useTodayTick'
 import { navItems } from './navItems'
 
 // 화면 방향에 따라 메뉴 위치가 바뀝니다. (index.css 참고)
@@ -8,6 +9,8 @@ import { navItems } from './navItems'
 // - 가로 화면(PC, 휴대폰 가로): 왼쪽 메뉴
 export default function AppShell() {
   const { children } = useChildren()
+  // 자정이 지나거나 앱으로 돌아오면 다시 그려서 "오늘"과 자동 출석이 맞게 보이게 합니다.
+  useTodayTick()
   // 자녀가 2명 이상일 때만 자녀 선택을 보여줍니다.
   const showSwitcher = children.length >= 2
 

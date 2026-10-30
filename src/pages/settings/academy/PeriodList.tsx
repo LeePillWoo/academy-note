@@ -4,6 +4,7 @@ import { PlusIcon, TrashIcon } from '../../../components/icons'
 import { newId } from '../../../data/id'
 import type { Period } from '../../../data/types'
 import { addDays, today, type DateStr } from '../../../utils/date'
+import { subjectParticle } from '../../../utils/korean'
 
 interface PeriodListProps<T> {
   /** 예: '일정', '수강료' */
@@ -62,6 +63,10 @@ export default function PeriodList<T>({ label, periods, startedOn, onChange, ren
         <PlusIcon />
         {label} 변경 추가
       </button>
+      <p className="muted">
+        {label}
+        {subjectParticle(label)} 중간에 바뀌면 "{label} 변경 추가"로 적용 시작일과 함께 넣으세요. 그 전 달력과 기록은 그대로 남습니다.
+      </p>
     </>
   )
 }

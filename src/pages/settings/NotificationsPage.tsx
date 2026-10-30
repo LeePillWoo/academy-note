@@ -1,5 +1,6 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
+import { isNativeApp, readSyncStatus, requestNotificationPermission, SYNC_EVENT } from '../../native/notifications'
 import { PlusIcon, TrashIcon } from '../../components/icons'
 import PageHeader from '../../components/PageHeader'
 import { useData } from '../../data/DataProvider'
@@ -47,9 +48,13 @@ export default function NotificationsPage() {
   return (
     <section className="narrow">
       <PageHeader title="알림" subtitle="언제 알림을 받을지 정합니다." backTo="/settings" />
-      <p className="note">
-        실제 알림은 앱(APK)으로 설치한 뒤에 울립니다. 지금은 설정을 저장하고, 아래 미리보기로 언제 울릴지 확인할 수 있습니다.
-      </p>
+      {isNativeApp() ? (
+        <PhoneStatusCard />
+      ) : (
+        <p className="note">
+          실제 알림은 앱(APK)으로 설치한 뒤에 울립니다. 지금은 설정을 저장하고, 아래 미리보기로 언제 울릴지 확인할 수 있습니다.
+        </p>
+      )}
 
       {NOTIFICATION_KINDS.map((kind) => (
         <RuleCard key={kind} kind={kind} rule={rules[kind]} onChange={(patch) => update(kind, patch)} />
@@ -90,6 +95,37 @@ export default function NotificationsPage() {
         )}
       </div>
     </section>
+  )
+}
+
+/** APK에서: 폰에 예약된 알림 수와 권한 상태 */
+function PhoneStatusCard() {
+  const [status, setStatus] = useState(readSyncStatus())
+  useEffect(() => {
+    const refresh = () => setStatus(readSyncStatus())
+    window.addEventListener(SYNC_EVENT, refresh)
+    return () => window.removeEventListener(SYNC_EVENT, refresh)
+  }, [])
+
+  if (!status) return <p className="note">알림을 예약하는 중입니다…</p>
+  if (status.permission !== 'granted') {
+    return (
+      <div className="card">
+        <p className="field-error">알림 권한이 꺼져 있어 알림이 울리지 않습니다.</p>
+        <p className="muted">허용을 눌러도 켜지지 않으면 폰 설정 → 애플리케이션 → 학원노트 → 알림에서 허용해 주세요.</p>
+        <button type="button" className="btn btn-primary" onClick={() => requestNotificationPermission().then(() => setStatus(readSyncStatus()))}>
+          알림 허용
+        </button>
+      </div>
+    )
+  }
+  const at = new Date(status.at)
+  return (
+    <p className="note">
+      폰에 예약된 알림 {status.scheduled}개 (앞으로 {status.windowDays}일) · 마지막 예약 {at.getMonth() + 1}월 {at.getDate()}일{' '}
+      {String(at.getHours()).padStart(2, '0')}:{String(at.getMinutes()).padStart(2, '0')}. 앱을 열 때마다 다시 예약합니다. 절전 모드에서는 몇 분 늦을 수
+      있습니다.
+    </p>
   )
 }
 

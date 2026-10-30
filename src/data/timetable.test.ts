@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { defaultMakeupRule } from './academyRules'
-import { buildBlocks, moveSlot, resizeSlot, schedulesWithChange, snapMinutes, timeRange, toMinutes, toTime } from './timetable'
+import { buildBlocks, moveSlot, removeSlot, resizeSlot, schedulesWithChange, snapMinutes, timeRange, toMinutes, toTime } from './timetable'
 import type { Academy, TimeSlot } from './types'
 
 const monWed: TimeSlot[] = [
@@ -92,6 +92,14 @@ describe('길이 바꾸기', () => {
     })
     expect(resizeSlot(monWed, 1, '17:00', '17:10')).toEqual({ error: '수업은 20분보다 길어야 합니다.' })
     expect(resizeSlot(monWed, 1, '23:00', '24:30')).toEqual({ error: '하루를 넘어가는 시각입니다.' })
+  })
+})
+
+describe('시간표에서 빼기', () => {
+  it('한 요일을 빼고, 마지막 하나는 못 뺌', () => {
+    expect(removeSlot(monWed, 1)).toEqual({ slots: [{ weekday: 3, start: '17:00', end: '18:30' }] })
+    expect(removeSlot([monWed[0]], 1)).toEqual({ error: '마지막 수업은 뺄 수 없습니다. 학원을 그만뒀으면 학원 설정에서 "그만둔 날"을 넣으세요.' })
+    expect(removeSlot(monWed, 5)).toEqual({ error: '뺄 수업을 찾지 못했습니다.' })
   })
 })
 

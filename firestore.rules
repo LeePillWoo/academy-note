@@ -1,0 +1,16 @@
+rules_version = '2';
+
+// 학원노트 가족 공유 보안 규칙.
+// Firebase 콘솔 → Firestore Database → 규칙 에 이 내용을 붙여넣고 게시하세요.
+// (테스트 모드로 만든 데이터베이스는 30일 뒤 모든 접근이 막히므로 꼭 바꿔야 합니다.)
+//
+// - 로그인(익명 포함)한 앱만 접근할 수 있습니다.
+// - 가족 코드(12자, 0·O·1·I 없음)를 아는 쪽만 그 가족의 문서를 읽고 씁니다. 코드가 열쇠입니다.
+// - 다른 가족의 코드는 알 수 없고, 전체 목록을 읽는 것도 막힙니다.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /families/{familyId}/{document=**} {
+      allow read, write: if request.auth != null && familyId.matches('^[A-HJ-NP-Z2-9]{12}$');
+    }
+  }
+}

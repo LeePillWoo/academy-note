@@ -17,6 +17,15 @@ export default defineConfig({
     locale: 'ko-KR',
     timezoneId: 'Asia/Seoul',
     screenshot: 'only-on-failure',
+    // 헤드리스 창이 가려지거나 뒤로 가면 Edge가 그리기 프레임을 멈춰, Playwright의 "요소가 멈춰 있는지" 확인이 끝나지 않습니다. 절전을 끕니다.
+    launchOptions: {
+      args: [
+        '--disable-renderer-backgrounding',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-background-timer-throttling',
+        '--disable-features=CalculateNativeWinOcclusion',
+      ],
+    },
   },
   projects: [
     {

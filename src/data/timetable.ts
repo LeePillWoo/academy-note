@@ -98,6 +98,13 @@ export function resizeSlot(slots: TimeSlot[], weekday: Weekday, newStart: TimeSt
   return { slots: slots.map((item) => (item.weekday === weekday ? { ...item, start: toTime(start), end: toTime(end) } : item)) }
 }
 
+/** 한 요일의 수업을 시간표에서 뺍니다. 마지막 수업은 뺄 수 없습니다(학원을 그만뒀으면 '그만둔 날'을 넣습니다). */
+export function removeSlot(slots: TimeSlot[], weekday: Weekday): { slots: TimeSlot[] } | { error: string } {
+  if (!slots.some((item) => item.weekday === weekday)) return { error: '뺄 수업을 찾지 못했습니다.' }
+  if (slots.length <= 1) return { error: '마지막 수업은 뺄 수 없습니다. 학원을 그만뒀으면 학원 설정에서 "그만둔 날"을 넣으세요.' }
+  return { slots: slots.filter((item) => item.weekday !== weekday) }
+}
+
 /** 예: '월 17:00~18:30 → 화 18:00~19:30' */
 export function describeMove(before: TimeSlot, after: TimeSlot): string {
   const text = (slot: TimeSlot) => `${WEEKDAY_NAMES[slot.weekday]} ${slot.start}~${slot.end}`

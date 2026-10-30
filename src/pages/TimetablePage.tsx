@@ -17,6 +17,7 @@ import {
   buildBlocks,
   dayIndexOf,
   moveSlot,
+  removeSlot,
   resizeSlot,
   schedulesWithChange,
   snapMinutes,
@@ -31,6 +32,10 @@ import { WEEKDAY_NAMES, WEEKDAYS_FROM_MONDAY, formatDate, today, weekdayOf, type
 
 /** 한 시간의 높이 (rem). 7시~24시가 모두 보이므로 너무 길어지지 않게 잡았습니다. */
 const HOUR_HEIGHT_REM = 3
+
+/** 꾹 누르기로 인식하는 시간(ms)과, 그 안에 이만큼 움직이면 끌기로 봅니다(px) */
+const LONG_PRESS_MS = 600
+const LONG_PRESS_MOVE_PX = 8
 
 /** 블록 전체를 옮기기 / 위 모서리로 시작 시각 바꾸기 / 아래 모서리로 끝 시각 바꾸기 */
 type DragMode = 'move' | 'resize-start' | 'resize-end'
@@ -55,22 +60,10 @@ type ApplyMode = 'date' | 'current'
 
 const clamp = (value: number, low: number, high: number) => Math.max(low, Math.min(high, value))
 
-/** 시간표에서 숨긴 자녀 (다음에 열 때도 유지) */
-const HIDDEN_KEY = 'academy-note:timetable-hidden-children'
-
-function readHiddenChildIds(): string[] {
-  try {
-    const value: unknown = JSON.parse(localStorage.getItem(HIDDEN_KEY) ?? '[]')
-    return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []
-  } catch {
-    return []
-  }
-}
-
 /**
- * 시간표: 한 주의 수업을 요일 × 시각 격자에 보여줍니다.
- * 편집 모드에서는 블록을 끌어서 요일과 시각을 옮기고, 위아래 모서리를 끌어 시작·끝 시각을 바꿉니다.
- * 저장할 때 언제부터 적용할지 고릅니다.
+ * 시간표: 한 주의 수업을 요일 × 시각 격자에 보여줍니다. 위쪽 자녀 선택(전체/자녀)을 그대로 따릅니다.
+ * 편집 모드에서는 블록을 끌어서 요일과 시각을 옮기고, 위아래 모서리를 끌어 시작·끝 시각을 바꾸고, 꾹 누르면 시간표에서 뺍니다.
+ * 저장할 때 언제부터 적용할지 고릅니다. 인쇄는 지금 보이는 자녀 기준입니다.
  */
 export default function TimetablePage() {
   const academies = useScopedAcademies()
@@ -85,41 +78,20 @@ export default function TimetablePage() {
   const [message, setMessage] = useState('')
   const [infoBlockId, setInfoBlockId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
-  // 전체 보기에서 시간표에 보일 자녀. 오른쪽 위 자녀 칸을 눌러 켜고 끕니다. (인쇄도 이 기준)
-  const [hiddenChildIds, setHiddenChildIds] = useState<Set<string>>(() => new Set(readHiddenChildIds()))
   const daysRef = useRef<HTMLDivElement>(null)
   const dragRef = useRef<DragRef | null>(null)
+  const longPressRef = useRef<number | null>(null)
 
-  // 전체 보기이고 자녀가 2명 이상이면 블록을 자녀 색으로 칠하고, 자녀 칸으로 보일 자녀를 고릅니다.
+  // 전체 보기이고 자녀가 2명 이상이면 블록을 자녀 색으로 칠합니다.
   const colorByChild = !selectedChildId && children.length > 1
-  const visibleAcademies = useMemo(
-    () => (colorByChild ? academies.filter((academy) => !hiddenChildIds.has(academy.childId)) : academies),
-    [academies, colorByChild, hiddenChildIds],
-  )
-  const blocks = useMemo(() => buildBlocks(visibleAcademies, asOf, overrides), [visibleAcademies, asOf, overrides])
+  const blocks = useMemo(() => buildBlocks(academies, asOf, overrides), [academies, asOf, overrides])
   const range = useMemo(() => timeRange(blocks), [blocks])
   const totalMin = range.endMin - range.startMin
   const hours = Array.from({ length: totalMin / 60 }, (_, i) => (range.startMin + i * 60) / 60)
   const academyById = new Map(academies.map((academy) => [academy.id, academy]))
   const childById = new Map(children.map((child) => [child.id, child]))
-  const visibleChildren = colorByChild
-    ? children.filter((child) => !hiddenChildIds.has(child.id))
-    : selectedChildId
-      ? children.filter((child) => child.id === selectedChildId)
-      : children
+  const visibleChildren = selectedChildId ? children.filter((child) => child.id === selectedChildId) : children
   const todayIndex = dayIndexOf(weekdayOf(todayStr))
-
-  /** 자녀 칸 누르기: null이면 전체 보이기, 아니면 그 자녀 켜고 끄기 */
-  function toggleChild(childId: string | null) {
-    setHiddenChildIds((prev) => {
-      const next = new Set(prev)
-      if (childId === null) next.clear()
-      else if (next.has(childId)) next.delete(childId)
-      else next.add(childId)
-      localStorage.setItem(HIDDEN_KEY, JSON.stringify([...next]))
-      return next
-    })
-  }
   const changedCount = overrides.size
 
   // 안내 문구는 잠시 뒤 사라집니다.
@@ -146,6 +118,34 @@ export default function TimetablePage() {
     return !original || original.start !== block.start || original.end !== block.end
   }
 
+  function clearLongPress() {
+    if (longPressRef.current !== null) {
+      clearTimeout(longPressRef.current)
+      longPressRef.current = null
+    }
+  }
+
+  function cancelDrag() {
+    clearLongPress()
+    dragRef.current = null
+    setDrag(null)
+  }
+
+  /** 꾹 누르기: 이 요일 수업을 시간표에서 뺍니다. (저장을 눌러야 적용) */
+  function askRemove(block: TimetableBlock) {
+    const academy = academyById.get(block.academyId)
+    if (!academy) return
+    const result = removeSlot(slotsOf(block.academyId), block.weekday)
+    if ('error' in result) {
+      setMessage(result.error)
+      return
+    }
+    const label = `${academy.name} ${WEEKDAY_NAMES[block.weekday]}요일 ${block.start}~${block.end}`
+    if (!window.confirm(`${label} 수업을 시간표에서 뺄까요?\n저장을 눌러야 실제로 적용됩니다.`)) return
+    setOverrides((prev) => new Map(prev).set(block.academyId, result.slots))
+    setMessage(`${label}을(를) 뺐습니다. 저장을 눌러 적용하세요.`)
+  }
+
   // ── 끌기 ──
   function onPointerDown(event: ReactPointerEvent<HTMLElement>, block: TimetableBlock, mode: DragMode) {
     if (!editing || !daysRef.current) return
@@ -169,11 +169,21 @@ export default function TimetablePage() {
     }
     event.currentTarget.setPointerCapture(event.pointerId)
     setDrag({ blockId: block.id, mode, dayIndex, startMin, endMin })
+    // 블록 가운데를 움직이지 않고 꾹 누르면 빼기
+    clearLongPress()
+    if (mode === 'move') {
+      longPressRef.current = window.setTimeout(() => {
+        longPressRef.current = null
+        cancelDrag()
+        askRemove(block)
+      }, LONG_PRESS_MS)
+    }
   }
 
   function onPointerMove(event: ReactPointerEvent<HTMLElement>) {
     const current = dragRef.current
     if (!current) return
+    if (Math.abs(event.clientX - current.startX) > LONG_PRESS_MOVE_PX || Math.abs(event.clientY - current.startY) > LONG_PRESS_MOVE_PX) clearLongPress()
     const dy = (event.clientY - current.startY) / current.pxPerMin
     let { dayIndex, startMin, endMin } = current
     if (current.mode === 'move') {
@@ -193,6 +203,7 @@ export default function TimetablePage() {
   }
 
   function onPointerUp(block: TimetableBlock) {
+    clearLongPress()
     const current = dragRef.current
     dragRef.current = null
     setDrag(null)
@@ -208,11 +219,6 @@ export default function TimetablePage() {
       return
     }
     setOverrides((prev) => new Map(prev).set(block.academyId, result.slots))
-  }
-
-  function cancelDrag() {
-    dragRef.current = null
-    setDrag(null)
   }
 
   function cancelEditing() {
@@ -274,22 +280,18 @@ export default function TimetablePage() {
             <DateField label="기준 날짜" value={asOf} onChange={setAsOf} />
           </div>
           {colorByChild && (
-            <div className="chips tt-child-toggles" role="group" aria-label="시간표에 보일 자녀">
-              <button type="button" className="chip" aria-pressed={hiddenChildIds.size === 0} onClick={() => toggleChild(null)}>
-                전체
-              </button>
+            <div className="calendar-legend" aria-label="자녀 색">
               {children.map((child) => (
-                <button key={child.id} type="button" className="chip" aria-pressed={!hiddenChildIds.has(child.id)}
-                  onClick={() => toggleChild(child.id)}>
+                <span key={child.id} className="legend-item">
                   <span className="legend-swatch" style={softColorVars(child.color) as CSSProperties} />
                   {child.name}
-                </button>
+                </span>
               ))}
             </div>
           )}
         </div>
         {editing && (
-          <p className="muted">블록을 끌어 요일·시각을 옮기고, 위아래 모서리를 끌어 시작·끝 시각을 바꾸세요. 10분 단위입니다.</p>
+          <p className="muted">블록을 끌어 요일·시각을 옮기고, 위아래 모서리를 끌어 시작·끝 시각을 바꾸세요(10분 단위). 꾹 누르면 시간표에서 뺍니다.</p>
         )}
         {message && (
           <p className="tt-message" role="status">
@@ -346,6 +348,8 @@ export default function TimetablePage() {
                     onPointerMove={onPointerMove}
                     onPointerUp={() => onPointerUp(block)}
                     onPointerCancel={cancelDrag}
+                    // 꾹 누를 때 브라우저 메뉴(글자 선택 등)가 뜨지 않게
+                    onContextMenu={(event) => event.preventDefault()}
                     onClick={() => !editing && setInfoBlockId(block.id)}
                   >
                     {editing && <span className="tt-handle is-start" aria-hidden="true" onPointerDown={(event) => onPointerDown(event, block, 'resize-start')} />}

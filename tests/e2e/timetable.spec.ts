@@ -22,7 +22,17 @@ async function dragByColumns(page: Page, selector: ReturnType<Page['locator']>, 
   await page.mouse.up()
 }
 
-test('시간표: 블록 표시, 정보 창, 편집 모드에서 끌어 옮기기, 겹침 안내, 저장', async ({ page }, testInfo) => {
+/** 블록 가운데를 움직이지 않고 꾹 누릅니다. (편집 모드에서 시간표에서 빼기) */
+async function longPress(page: Page, selector: ReturnType<Page['locator']>) {
+  await selector.scrollIntoViewIfNeeded()
+  const box = (await selector.boundingBox())!
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+  await page.mouse.down()
+  await page.waitForTimeout(900)
+  await page.mouse.up()
+}
+
+test('시간표: 블록 표시, 정보 창, 편집 모드에서 끌어 옮기기·늘이기·빼기, 겹침 안내, 저장', async ({ page }, testInfo) => {
   await addChildren(page, ['첫째', '둘째'])
 
   // 첫째 수학학원 월·수 17:00~18:30
@@ -51,9 +61,9 @@ test('시간표: 블록 표시, 정보 창, 편집 모드에서 끌어 옮기기
   await expectNoHorizontalOverflow(page)
   await page.screenshot({ path: testInfo.outputPath('1-timetable.png') })
 
-  // 오른쪽 위 자녀 칸: 둘째를 끄면 피아노가 사라지고, 인쇄에도 첫째 것만 들어감
-  const toggles = page.getByRole('group', { name: '시간표에 보일 자녀' })
-  await toggles.getByRole('button', { name: '둘째' }).click()
+  // 위쪽 자녀 선택에서 첫째를 고르면 첫째 수업만 보이고, 인쇄에도 첫째 것만 들어감
+  const switcher = page.getByRole('group', { name: '자녀 선택' })
+  await switcher.getByRole('button', { name: '첫째' }).click()
   await expect(blocks).toHaveCount(2)
   await expect(blocks.filter({ hasText: '피아노' })).toHaveCount(0)
   await page.emulateMedia({ media: 'print' })
@@ -65,10 +75,7 @@ test('시간표: 블록 표시, 정보 창, 편집 모드에서 끌어 옮기기
   await expect(printSheet.locator('.print-day-head')).toHaveCount(5) // 월~금 (주말 수업 없음)
   await page.screenshot({ path: testInfo.outputPath('1b-print.png'), fullPage: true })
   await page.emulateMedia({ media: 'screen' })
-  // 새로고침해도 숨김이 유지되고, 전체를 누르면 다시 보임
-  await page.reload()
-  await expect(blocks).toHaveCount(2)
-  await toggles.getByRole('button', { name: '전체' }).click()
+  await switcher.getByRole('button', { name: '전체' }).click()
   await expect(blocks).toHaveCount(3)
 
   // 블록을 누르면 정보 창
@@ -103,10 +110,22 @@ test('시간표: 블록 표시, 정보 창, 편집 모드에서 끌어 옮기기
   await expect(page.locator('.tt-block.is-changed')).toHaveAttribute('aria-label', /17:00~19:30/)
   await page.screenshot({ path: testInfo.outputPath('2-editing.png') })
 
+  // 꾹 누르기: 둘째 피아노는 유일한 수업이라 뺄 수 없다는 안내, 수학학원 수요일은 빼기
+  await longPress(page, blocks.filter({ hasText: '피아노' }))
+  await expect(page.getByRole('status')).toContainText('마지막 수업은 뺄 수 없습니다')
+  await expect(blocks).toHaveCount(3)
+  page.once('dialog', (dialog) => {
+    expect(dialog.message()).toContain('수학학원 수요일 17:00~18:30 수업을 시간표에서 뺄까요?')
+    dialog.accept()
+  })
+  await longPress(page, blocks.filter({ hasText: '수학학원' }).last())
+  await expect(blocks.filter({ hasText: '수학학원' })).toHaveCount(1)
+  await expect(page.getByRole('button', { name: /저장/ })).toHaveText('저장 (1)')
+
   // 저장: 지금 일정 고치기
   await page.getByRole('button', { name: '저장 (1)' }).click()
   const sheet = page.getByRole('dialog', { name: '시간표 변경 적용' })
-  await expect(sheet).toContainText('월·수 17:00~18:30 → 화 17:00~19:30, 수 17:00~18:30')
+  await expect(sheet).toContainText('월·수 17:00~18:30 → 화 17:00~19:30')
   await sheet.getByRole('radio', { name: '지금 일정 고치기' }).click()
   await sheet.getByRole('button', { name: '적용' }).click()
   await expect(sheet).toBeHidden()
@@ -114,7 +133,8 @@ test('시간표: 블록 표시, 정보 창, 편집 모드에서 끌어 옮기기
   await expect(page.getByRole('button', { name: '편집' })).toBeVisible()
 
   await page.goto('/#/settings/academies')
-  await expect(page.locator('.list-link', { hasText: '수학학원' })).toContainText('화·수 ·')
+  await expect(page.locator('.list-link', { hasText: '수학학원' })).toContainText('화 ·')
   await page.locator('.list-link', { hasText: '수학학원' }).click()
   await expect(page.getByLabel('수업 화요일 끝 시각')).toHaveValue('19:30')
+  await expect(page.getByRole('group', { name: '수업 요일' }).getByRole('button', { name: '수' })).toHaveAttribute('aria-pressed', 'false')
 })

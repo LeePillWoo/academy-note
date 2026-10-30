@@ -9,11 +9,16 @@ import AcademiesPage from './pages/settings/AcademiesPage'
 import AcademyFormPage from './pages/settings/academy/AcademyFormPage'
 import ChildFormPage from './pages/settings/ChildFormPage'
 import ChildrenPage from './pages/settings/ChildrenPage'
+import BackupPage from './pages/settings/BackupPage'
+import FamilyPage from './pages/settings/FamilyPage'
 import NotificationsPage from './pages/settings/NotificationsPage'
 import SettingsPage from './pages/settings/SettingsPage'
+import NotificationSync from './components/NotificationSync'
 
 export default function App() {
   return (
+    <>
+    <NotificationSync />
     <Routes>
       <Route element={<AppShell />}>
         <Route index element={<HomePage />} />
@@ -23,6 +28,8 @@ export default function App() {
         <Route path="makeups" element={<MakeupsPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="settings/notifications" element={<NotificationsPage />} />
+        <Route path="settings/backup" element={<BackupPage />} />
+        <Route path="settings/family" element={<FamilyPage />} />
         <Route path="settings/children" element={<ChildrenPage />} />
         <Route path="settings/children/new" element={<ChildFormPage />} />
         <Route path="settings/children/:childId" element={<ChildFormPage />} />
@@ -32,5 +39,6 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
+    </>
   )
 }

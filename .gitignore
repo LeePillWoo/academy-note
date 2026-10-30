@@ -28,3 +28,4 @@ playwright-report/
 
 # APK 결과물 (빌드해서 만듭니다)
 apk/
+!.env.example
