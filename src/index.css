@@ -22,6 +22,8 @@
   --nav-height: 4rem;
   --radius: 1rem;
 
+  /* 기본 글자를 브라우저 기본(16px)보다 조금 크게(17px). rem 단위라 화면 전체가 함께 커집니다. */
+  font-size: 106.25%;
   color-scheme: only light;
   font-family: system-ui, -apple-system, 'Segoe UI', 'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
   line-height: 1.5;
@@ -1186,30 +1188,57 @@ details > summary.summary {
   overflow: hidden;
   padding: 0 0.25rem;
   color: var(--chip-fg);
-  font-size: 0.625rem;
+  font-size: 0.6875rem;
   font-weight: 600;
-  line-height: 1.0625rem;
+  line-height: 1.125rem;
   white-space: nowrap;
   text-align: left;
   text-overflow: clip;
   background: var(--chip-bg);
   border: 1px solid var(--chip-border);
+  /* 왼쪽 띠: 학원(전체 보기는 자녀) 색. 상태 칩에서도 어느 학원인지 알 수 있게 */
+  border-left: 3px solid var(--chip-solid);
   border-radius: 0.3125rem;
 }
 
-/* 결석·휴강: 바탕 없이 줄 긋기 */
-.cal-chip.is-missed {
-  color: var(--color-muted);
-  text-decoration: line-through;
-  background: transparent;
-  border-color: var(--color-border);
+/* 상태 글자(결석·휴강·보강)는 굵게 앞에 */
+.cal-chip-tag {
+  margin-right: 0.1875rem;
+  font-weight: 800;
 }
 
-/* 보강: 점선 테두리 */
+/*
+ * 결석: 빨강 칩에 이름은 줄 긋기 / 휴강: 주황 칩 / 보강: 보라 칩 (예정은 점선, 다녀온 것은 실선)
+ * 학원(자녀) 색 칩과 한눈에 구분되도록 상태마다 다른 색을 씁니다.
+ */
+.cal-chip.is-absent {
+  color: #b91c1c;
+  background: #fee2e2;
+  border-color: #fca5a5;
+  border-left-color: var(--chip-solid);
+}
+
+.cal-chip.is-absent .cal-chip-name {
+  text-decoration: line-through;
+}
+
+.cal-chip.is-cancelled {
+  color: #9a3412;
+  background: #ffedd5;
+  border-color: #fdba74;
+  border-left-color: var(--chip-solid);
+}
+
 .cal-chip.is-makeup {
-  background: transparent;
+  color: #6b21a8;
+  background: #f3e8ff;
+  border-color: #c084fc;
   border-style: dashed;
-  border-color: currentColor;
+  border-left: 3px solid var(--chip-solid);
+}
+
+.cal-chip.is-makeup.is-done {
+  border-style: solid;
 }
 
 .cal-chip-time {
@@ -1220,7 +1249,7 @@ details > summary.summary {
 
 .cal-more {
   color: var(--color-muted);
-  font-size: 0.625rem;
+  font-size: 0.6875rem;
   line-height: 0.875rem;
   text-align: center;
 }
@@ -1430,8 +1459,8 @@ details > summary.summary {
 
   /* PC: 칸이 넓으니 칩에 시각도 */
   .cal-chip {
-    font-size: 0.6875rem;
-    line-height: 1.125rem;
+    font-size: 0.75rem;
+    line-height: 1.25rem;
   }
 
   .cal-chip-time {
@@ -1487,20 +1516,27 @@ details > summary.summary {
 }
 
 .legend-swatch {
-  width: 0.875rem;
-  height: 0.625rem;
+  width: 1rem;
+  height: 0.75rem;
   background: var(--chip-bg);
   border: 1px solid var(--chip-border, transparent);
   border-radius: 0.1875rem;
 }
 
-.legend-swatch.is-makeup {
-  border: 1px dashed var(--color-muted);
+/* 범례의 상태 색은 달력 칩과 같은 색 */
+.legend-swatch.is-absent {
+  background: #fee2e2;
+  border-color: #fca5a5;
 }
 
-.legend-swatch.is-missed {
-  border: 1px solid var(--color-muted);
-  background: linear-gradient(var(--color-muted), var(--color-muted)) center / 100% 1px no-repeat;
+.legend-swatch.is-cancelled {
+  background: #ffedd5;
+  border-color: #fdba74;
+}
+
+.legend-swatch.is-makeup {
+  background: #f3e8ff;
+  border: 1px dashed #c084fc;
 }
 
 /* ===== 납부 ===== */
@@ -1650,4 +1686,192 @@ details > summary.summary {
   .topbar.has-switcher .brand-text {
     display: none;
   }
+}
+
+/* ===== 시간표 ===== */
+.timetable-card {
+  gap: 0.75rem;
+}
+
+.tt-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.tt-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+}
+
+.tt-asof {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tt-asof .date-input {
+  width: auto;
+  min-height: 2.5rem;
+}
+
+.tt-message {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  background: var(--color-primary-soft);
+  border-radius: 0.625rem;
+}
+
+/* 좁은 화면에서는 옆으로 밀어서 봅니다. (격자는 최소 너비를 지킴) */
+.timetable-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.timetable {
+  display: grid;
+  grid-template-columns: 2.75rem repeat(7, minmax(4.75rem, 1fr));
+  grid-template-rows: auto auto;
+  min-width: 36rem;
+  user-select: none;
+}
+
+.tt-head {
+  padding-bottom: 0.375rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.tt-head span {
+  display: inline-block;
+  min-width: 1.75rem;
+  padding: 0 0.375rem;
+  line-height: 1.5rem;
+  border-radius: 999px;
+}
+
+.tt-head.is-today span {
+  color: var(--color-on-primary);
+  background: var(--color-primary);
+}
+
+.tt-head:not(.wd-0):not(.wd-6) {
+  color: var(--color-text);
+}
+
+/* 시각 열과 왼쪽 위 모서리는 옆으로 밀어도 왼쪽에 붙어 있습니다. */
+.tt-corner,
+.tt-times {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: var(--color-surface);
+}
+
+.tt-times {
+  height: calc(var(--hours) * var(--hour-height));
+}
+
+.tt-time {
+  position: absolute;
+  right: 0.375rem;
+  color: var(--color-muted);
+  font-size: 0.6875rem;
+  line-height: 1;
+  transform: translateY(-50%);
+}
+
+/* 요일 칸: 시간마다 가로선, 요일 사이 세로선 */
+.tt-days {
+  position: relative;
+  grid-column: 2 / -1;
+  height: calc(var(--hours) * var(--hour-height));
+  overflow: hidden;
+  background:
+    repeating-linear-gradient(to bottom, var(--color-border) 0 1px, transparent 1px var(--hour-height)),
+    repeating-linear-gradient(to right, transparent 0 calc(100% / 7 - 1px), var(--color-border) calc(100% / 7 - 1px) calc(100% / 7));
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+}
+
+.tt-today-col {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: var(--color-primary-soft);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* 수업 블록: 학원(전체 보기는 자녀) 색의 옅은 바탕, 왼쪽 띠 */
+.tt-block {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 0.0625rem;
+  padding: 0.25rem 0.3125rem;
+  overflow: hidden;
+  color: var(--chip-fg);
+  font-size: 0.75rem;
+  line-height: 1.2;
+  text-align: left;
+  background: var(--chip-bg);
+  border: 1px solid var(--chip-border);
+  border-left: 3px solid var(--chip-solid);
+  border-radius: 0.5rem;
+  cursor: pointer;
+}
+
+.tt-block-name {
+  overflow: hidden;
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.tt-block-time {
+  font-size: 0.6875rem;
+  white-space: nowrap;
+  opacity: 0.85;
+}
+
+/* 편집 모드: 손가락으로 끌 때 화면이 같이 밀리지 않게 */
+.tt-block.is-editable {
+  cursor: grab;
+  touch-action: none;
+}
+
+.tt-block.is-dragging {
+  z-index: 3;
+  cursor: grabbing;
+  box-shadow: 0 8px 20px rgb(30 34 53 / 0.2);
+}
+
+/* 아직 저장하지 않은 변경 */
+.tt-block.is-changed {
+  outline: 2px dashed var(--color-primary);
+  outline-offset: 1px;
+}
+
+.tt-block:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* 변경 내용 목록 (저장 창) */
+.change-list {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.change-list li {
+  display: grid;
+  gap: 0.125rem;
+  font-size: 0.9375rem;
 }

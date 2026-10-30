@@ -45,10 +45,24 @@ interface CalendarItem {
   key: string
   academyId: string
   time?: string
-  /** 결석, 휴강 */
-  missed: boolean
-  /** 보강 출석이나 보강 예정 */
-  makeup: boolean
+  kind: 'lesson' | 'absent' | 'cancelled' | 'makeupDone' | 'makeupPlanned'
+}
+
+/** 칩 앞에 붙는 상태 글자 (보통 수업은 없음) */
+const KIND_TAG: Record<CalendarItem['kind'], string> = {
+  lesson: '',
+  absent: '결석',
+  cancelled: '휴강',
+  makeupDone: '보강',
+  makeupPlanned: '보강',
+}
+
+const KIND_CLASS: Record<CalendarItem['kind'], string> = {
+  lesson: '',
+  absent: 'is-absent',
+  cancelled: 'is-cancelled',
+  makeupDone: 'is-makeup is-done',
+  makeupPlanned: 'is-makeup',
 }
 
 /** 달력 칸 하나에 보여줄 칩 수. 넘치면 '+2'처럼 줄여서 보여줍니다. */
@@ -141,19 +155,17 @@ export default function CalendarPage() {
   /** 그날 일정(수업, 보강 출석, 보강 예정)을 시각 순서로 */
   function itemsOn(date: DateStr): CalendarItem[] {
     const items: CalendarItem[] = [
-      ...(lessonsByDate.get(date) ?? []).map((view) => ({
+      ...(lessonsByDate.get(date) ?? []).map((view): CalendarItem => ({
         key: view.key,
         academyId: view.academyId,
         time: view.start,
-        missed: view.status === 'absent' || view.status === 'cancelled',
-        makeup: view.status === 'makeup',
+        kind: view.status === 'absent' ? 'absent' : view.status === 'cancelled' ? 'cancelled' : view.status === 'makeup' ? 'makeupDone' : 'lesson',
       })),
-      ...(makeupsByDate.get(date) ?? []).map((makeup) => ({
+      ...(makeupsByDate.get(date) ?? []).map((makeup): CalendarItem => ({
         key: makeup.id,
         academyId: makeup.academyId,
         time: makeup.start,
-        missed: false,
-        makeup: true,
+        kind: 'makeupPlanned',
       })),
     ]
     return items.sort((a, b) => (a.time ?? '99:99').localeCompare(b.time ?? '99:99'))
@@ -268,7 +280,7 @@ export default function CalendarPage() {
                   .map((item) => {
                     const academy = academyById.get(item.academyId)
                     const child = colorByChild ? childById.get(academy?.childId ?? '') : undefined
-                    return `${child ? `${child.name} ` : ''}${academy?.name ?? ''}${item.makeup ? ' 보강' : ''}${item.missed ? ' 빠짐' : ''}`
+                    return `${child ? `${child.name} ` : ''}${academy?.name ?? ''}${KIND_TAG[item.kind] ? ` ${KIND_TAG[item.kind]}` : ''}`
                   })
                   .join(', ')
               }}
@@ -280,12 +292,14 @@ export default function CalendarPage() {
                   <span className="day-chips" aria-hidden="true">
                     {items.slice(0, MAX_CHIPS).map((item) => {
                       const color = chipColor(item.academyId)
-                      const classes = ['cal-chip', item.missed && 'is-missed', item.makeup && 'is-makeup'].filter(Boolean).join(' ')
+                      const classes = ['cal-chip', KIND_CLASS[item.kind]].filter(Boolean).join(' ')
+                      // 결석·휴강·보강은 상태 색(빨강·주황·보라) 칩에 상태 글자를 앞에 붙이고, 왼쪽 띠로 학원(자녀) 색을 남깁니다.
                       return (
                         <span key={item.key} className={classes}
                           style={softColorVars(color) as CSSProperties}>
-                          {item.time && <span className="cal-chip-time">{item.time}</span>}
-                          {academyById.get(item.academyId)?.name}
+                          {KIND_TAG[item.kind] && <span className="cal-chip-tag">{KIND_TAG[item.kind]}</span>}
+                          {item.kind === 'lesson' && item.time && <span className="cal-chip-time">{item.time}</span>}
+                          <span className="cal-chip-name">{academyById.get(item.academyId)?.name}</span>
                         </span>
                       )
                     })}
@@ -302,13 +316,17 @@ export default function CalendarPage() {
                     {child.name}
                   </span>
                 ))}
-              <span className="legend-item muted">
-                <span className="legend-swatch is-makeup" />
-                보강
+              <span className="legend-item">
+                <span className="legend-swatch is-absent" />
+                결석
               </span>
-              <span className="legend-item muted">
-                <span className="legend-swatch is-missed" />
-                결석·휴강
+              <span className="legend-item">
+                <span className="legend-swatch is-cancelled" />
+                휴강
+              </span>
+              <span className="legend-item">
+                <span className="legend-swatch is-makeup" />
+                보강 <span className="muted">(점선: 예정)</span>
               </span>
             </div>
           </div>

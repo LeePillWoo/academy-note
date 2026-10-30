@@ -31,6 +31,7 @@ export function softColorVars(hex: string): Record<string, string> {
     '--chip-bg': `rgb(${r} ${g} ${b} / 0.14)`,
     '--chip-border': `rgb(${r} ${g} ${b} / 0.28)`,
     '--chip-fg': mix(hex, -0.35),
+    '--chip-solid': hex,
   }
 }
 

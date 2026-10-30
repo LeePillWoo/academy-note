@@ -123,12 +123,15 @@ export default function PaymentsPage() {
         <div className="home-section">
           <h2 className="section-heading">회차 현황</h2>
           <ul className="list">
-            {progress.map(({ academy, used, total: count, nextDueOn }) => (
+            {progress.map(({ academy, used, total: count, nextDueOn, undecidedMakeups }) => (
               <li key={academy.id} className="list-row progress-row">
                 <span className="dot" style={{ background: academy.color }} />
                 <span className="list-text">
                   <span className="list-title">{academy.name}</span>
-                  <span className="list-sub">{nextDueOn ? `다음 납부 ${formatDate(nextDueOn)}` : '다음 납부일 계산 중'}</span>
+                  <span className="list-sub">
+                    {nextDueOn ? `다음 납부 ${formatDate(nextDueOn)}` : '다음 납부일 계산 중'}
+                    {undecidedMakeups > 0 && ` · 보강 미정 ${undecidedMakeups}개 (결과에 따라 회차가 바뀜)`}
+                  </span>
                   <span className="progress" aria-hidden="true">
                     <span style={{ width: `${(used / count) * 100}%` }} />
                   </span>

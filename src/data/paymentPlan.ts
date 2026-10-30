@@ -26,7 +26,10 @@ const SESSION_LOOKAHEAD_DAYS = 180
  * 회차로 세는 수업 날짜 (날짜 순서). 앞으로의 수업도 예정대로 세어 다음 납부일을 미리 알 수 있게 합니다.
  * - 출석, 예정: 셈 / 휴강: 안 셈
  * - 결석: 'always'면 셈, 'never'면 안 셈, 'ifNoMakeup'이면 보강이 안 되는 것(보강 안 함, 기한 만료, 보강 없음)만 셈
- * - 보강 출석: 그 결석을 세지 않을 때만 셈 ('always'면 결석을 이미 셌으므로 안 셈)
+ * - 보강 출석: 셈. 다만 'always'에서 결석분 보강은 결석을 이미 셌으므로 안 셈 (휴강분 보강은 셈)
+ *
+ * 결과: 결석 하나에 보강까지 다녀오면 어느 방식이든 회차는 정확히 1 늘어납니다.
+ * 'ifNoMakeup'은 보강이 미정·예정인 동안 결석이 회차에 안 들어가고, 보강 안 함·기한 만료가 되면 그때 들어갑니다.
  */
 export function countedSessionDates(
   academy: Academy,
@@ -44,8 +47,11 @@ export function countedSessionDates(
           return true
         case 'cancelled':
           return false
-        case 'makeup':
-          return counting !== 'always'
+        case 'makeup': {
+          if (counting !== 'always') return true
+          const makeup = context.makeups.find((item) => item.id === view.record?.makeupId)
+          return makeup?.reason !== 'absent'
+        }
         case 'absent': {
           if (counting === 'always') return true
           if (counting === 'never') return false
@@ -116,6 +122,8 @@ export interface SessionProgress {
   used: number
   total: number
   nextDueOn?: DateStr
+  /** '보강을 안 하면 셈' 학원에서 아직 결과가 안 난(미정·예정) 결석분 보강 수. 결과에 따라 회차가 바뀝니다. */
+  undecidedMakeups: number
 }
 
 /** 회차 단위 학원이면 지금 묶음의 진행 상황, 아니면 null */
@@ -131,7 +139,15 @@ export function sessionProgress(academy: Academy, context: FeeContext): SessionP
   const nextDueOn = plannedDues(academy, addDays(todayStr, SESSION_LOOKAHEAD_DAYS), context).find(
     (due) => due.dueOn > todayStr && due.key.includes(`|s|${period.id}|`),
   )?.dueOn
-  return { used: total % plan.sessionCount, total: plan.sessionCount, nextDueOn }
+  const undecidedMakeups =
+    plan.absenceCounting === 'ifNoMakeup'
+      ? context.makeups.filter((makeup) => {
+          if (makeup.academyId !== academy.id || makeup.reason !== 'absent') return false
+          const state = makeupState(makeup, todayStr)
+          return state === 'pending' || state === 'scheduled'
+        }).length
+      : 0
+  return { used: total % plan.sessionCount, total: plan.sessionCount, nextDueOn, undecidedMakeups }
 }
 
 // ===== 화면에 보여줄 납부 =====

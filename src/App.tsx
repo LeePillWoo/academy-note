@@ -4,6 +4,7 @@ import CalendarPage from './pages/CalendarPage'
 import HomePage from './pages/HomePage'
 import MakeupsPage from './pages/MakeupsPage'
 import PaymentsPage from './pages/PaymentsPage'
+import TimetablePage from './pages/TimetablePage'
 import AcademiesPage from './pages/settings/AcademiesPage'
 import AcademyFormPage from './pages/settings/academy/AcademyFormPage'
 import ChildFormPage from './pages/settings/ChildFormPage'
@@ -16,6 +17,7 @@ export default function App() {
       <Route element={<AppShell />}>
         <Route index element={<HomePage />} />
         <Route path="calendar" element={<CalendarPage />} />
+        <Route path="timetable" element={<TimetablePage />} />
         <Route path="payments" element={<PaymentsPage />} />
         <Route path="makeups" element={<MakeupsPage />} />
         <Route path="settings" element={<SettingsPage />} />

@@ -40,7 +40,7 @@ test('출석 체크: 오늘 결석 기록, 지난 수업 자동 출석, 휴강 �
   await page.getByRole('navigation', { name: '주 메뉴' }).getByRole('link', { name: '달력' }).click()
   const todayCell = page.locator('.is-calendar .day.is-today')
   await expect(todayCell.locator('.cal-chip')).toHaveCount(2)
-  await expect(todayCell.locator('.cal-chip.is-missed')).toContainText('수학학원')
+  await expect(todayCell.locator('.cal-chip.is-absent')).toContainText('수학학원')
   await expect(page.locator('.calendar-legend')).toContainText('첫째')
   await expectNoHorizontalOverflow(page)
   await page.screenshot({ path: testInfo.outputPath('2b-calendar-chips.png') })
