@@ -21,3 +21,7 @@ Thumbs.db
 *.jks
 *.keystore
 keystore.properties
+
+# 테스트 결과
+test-results/
+playwright-report/

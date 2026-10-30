@@ -1,18 +1,10 @@
 import type { ReactNode } from 'react'
+import { Icon } from '../components/icons'
 
 export interface NavItem {
   to: string
   label: string
   icon: ReactNode
-}
-
-function Icon({ children }: { children: ReactNode }) {
-  return (
-    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor"
-      strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      {children}
-    </svg>
-  )
 }
 
 export const navItems: NavItem[] = [

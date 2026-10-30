@@ -2,7 +2,9 @@
 /* 밝은 화면과 어두운 화면을 직접 지원합니다. 삼성 인터넷의 강제 다크 모드로 색이 깨지지 않게 하기 위해서입니다. */
 :root {
   --color-primary: #2f6fed;
+  --color-on-primary: #ffffff;
   --color-primary-soft: #e8efff;
+  --color-danger: #dc2626;
   --color-bg: #f5f7fb;
   --color-surface: #ffffff;
   --color-text: #1f2937;
@@ -22,7 +24,9 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --color-primary: #6e9bff;
+    --color-on-primary: #0b1220;
     --color-primary-soft: #1e2a47;
+    --color-danger: #f87171;
     --color-bg: #111827;
     --color-surface: #1f2937;
     --color-text: #f3f4f6;
@@ -46,8 +50,16 @@ body {
 }
 
 h1,
+h2,
 p {
   margin: 0;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
 }
 
 /* ===== 기본 배치: 휴대폰 세로 (아래쪽 탭 메뉴) ===== */
@@ -110,6 +122,7 @@ p {
   z-index: 5;
   display: flex;
   align-items: center;
+  gap: 1rem;
   min-height: calc(3.25rem + env(safe-area-inset-top));
   padding: env(safe-area-inset-top) calc(1rem + env(safe-area-inset-right)) 0 calc(1rem + env(safe-area-inset-left));
   background: var(--color-surface);
@@ -117,6 +130,7 @@ p {
 }
 
 .topbar-brand {
+  flex-shrink: 0;
   color: var(--color-primary);
   font-size: 1.125rem;
   font-weight: 700;
@@ -128,19 +142,96 @@ p {
     calc(1rem + env(safe-area-inset-left));
 }
 
-/* ===== 공통 요소 ===== */
-.page-title {
+/* ===== 자녀 선택 (위쪽 막대) ===== */
+/* 자녀가 많아 칸이 모자라면 옆으로 밀어서 봅니다. */
+.chips {
+  display: flex;
+  gap: 0.5rem;
+  min-width: 0;
+  padding: 0.5rem 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.chips::-webkit-scrollbar {
+  display: none;
+}
+
+.chip {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 2.5rem;
+  padding: 0 0.875rem;
+  color: var(--color-text);
+  font-size: 0.875rem;
+  white-space: nowrap;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.chip[aria-pressed='true'] {
+  color: var(--color-primary);
+  font-weight: 600;
+  background: var(--color-primary-soft);
+  border-color: var(--color-primary);
+}
+
+.dot {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 50%;
+}
+
+/* ===== 화면 제목 ===== */
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: 2.75rem;
   margin-bottom: 1rem;
+}
+
+.page-title {
   font-size: 1.5rem;
 }
 
+.back-btn {
+  margin-left: -0.625rem;
+}
+
+/* 설정이나 입력 화면처럼 넓을 필요가 없는 화면 */
+.narrow {
+  max-width: 40rem;
+}
+
+/* ===== 카드 ===== */
 .card {
   display: grid;
   gap: 0.5rem;
+  margin-bottom: 1rem;
   padding: 1rem;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
+}
+
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.125rem;
+}
+
+.card > .btn {
+  justify-self: start;
+  margin-top: 0.5rem;
 }
 
 .muted {
@@ -148,8 +239,271 @@ p {
   font-size: 0.875rem;
 }
 
+.hint {
+  margin-top: 0.75rem;
+}
+
+/* ===== 단추 ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  min-height: 2.75rem;
+  padding: 0 1.25rem;
+  font-size: 1rem;
+  font-weight: 600;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: 0.625rem;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.btn:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.btn-primary {
+  color: var(--color-on-primary);
+  background: var(--color-primary);
+}
+
+.btn-secondary {
+  color: var(--color-text);
+  background: var(--color-surface);
+  border-color: var(--color-border);
+}
+
+.btn-danger {
+  color: var(--color-danger);
+  background: transparent;
+  border-color: var(--color-danger);
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.icon-btn {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  color: var(--color-text);
+  background: transparent;
+  border: 0;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.icon-btn:disabled {
+  color: var(--color-border);
+  cursor: default;
+}
+
+@media (hover: hover) {
+  .icon-btn:not(:disabled):hover,
+  .list-link:hover,
+  .list-main:hover {
+    background: var(--color-primary-soft);
+  }
+}
+
+.btn:focus-visible,
+.icon-btn:focus-visible,
+.chip:focus-visible,
+.list-link:focus-visible,
+.list-main:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* ===== 목록 ===== */
+.list {
+  margin: 0 0 1rem;
+  padding: 0;
+  overflow: hidden;
+  list-style: none;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+}
+
+.list > li + li {
+  border-top: 1px solid var(--color-border);
+}
+
+.list-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 3.5rem;
+  padding: 0 0.5rem 0 1rem;
+}
+
+.list-row.is-disabled {
+  color: var(--color-muted);
+  padding-right: 1rem;
+}
+
+.list-link,
+.list-main {
+  color: inherit;
+  text-decoration: none;
+}
+
+.list-link {
+  padding-right: 0.75rem;
+}
+
+.list-main {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 0.75rem;
+  align-self: stretch;
+  min-width: 0;
+  margin-left: -1rem;
+  padding: 0 0.5rem 0 1rem;
+}
+
+.list-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.list-main svg,
+.list-link svg {
+  flex-shrink: 0;
+  color: var(--color-muted);
+}
+
+.row-actions {
+  display: flex;
+}
+
+/* ===== 입력 ===== */
+.form {
+  gap: 1.25rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+/* fieldset 안의 legend는 grid 배치를 따르지 않아서 아래 여백을 따로 줍니다. */
+fieldset.field {
+  display: block;
+}
+
+fieldset.field > legend {
+  margin-bottom: 0.5rem;
+}
+
+fieldset.field > * + * {
+  margin-top: 0.5rem;
+}
+
+.field-label {
+  padding: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+/* 글자 크기 1rem 이상: 휴대폰에서 입력창을 누를 때 화면이 확대되지 않게 합니다. */
+.input {
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0 0.875rem;
+  color: var(--color-text);
+  font-size: 1rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 0.625rem;
+}
+
+.input:focus {
+  border-color: var(--color-primary);
+  outline: 1px solid var(--color-primary);
+}
+
+.input[aria-invalid='true'] {
+  border-color: var(--color-danger);
+}
+
+.field-error {
+  color: var(--color-danger);
+  font-size: 0.875rem;
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.form-actions .btn {
+  flex: 1;
+}
+
+/* ===== 색 고르기 ===== */
+.color-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.swatch {
+  width: 2.75rem;
+  height: 2.75rem;
+  margin: 0;
+  background-color: var(--swatch);
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 1.375rem;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+/* 고른 색: 바깥 테두리와 체크 표시 */
+.swatch:checked {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12l5 5 9-10'/%3E%3C/svg%3E");
+  box-shadow: 0 0 0 3px var(--color-surface), 0 0 0 5px var(--swatch);
+}
+
+.swatch:focus-visible {
+  outline: 2px solid var(--color-text);
+  outline-offset: 6px;
+}
+
+/* ===== 불러오는 중, 오류 화면 ===== */
+.status-screen {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 1rem;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 1.5rem;
+  color: var(--color-muted);
+  text-align: center;
+}
+
 /* ===== 휴대폰 가로, 태블릿 (600px 이상): 왼쪽 좁은 메뉴 ===== */
-/* 가로 화면은 높이가 낮으므로 위쪽 막대를 없애고 메뉴를 왼쪽으로 옮깁니다. */
+/* 가로 화면은 높이가 낮으므로 메뉴를 왼쪽으로 옮깁니다. 위쪽 막대는 자녀 선택이 있을 때만 보입니다. */
 @media (min-width: 600px) {
   .shell {
     display: flex;
@@ -192,12 +546,29 @@ p {
   }
 
   .topbar {
+    min-height: 0;
+    padding: env(safe-area-inset-top) calc(1.5rem + env(safe-area-inset-right)) 0 1.5rem;
+  }
+
+  .topbar:not(.has-switcher),
+  .topbar-brand {
     display: none;
   }
 
   .content {
     padding: calc(1.5rem + env(safe-area-inset-top)) calc(1.5rem + env(safe-area-inset-right))
       calc(1.5rem + env(safe-area-inset-bottom)) 1.5rem;
+  }
+
+  .topbar.has-switcher + .content {
+    padding-top: 1.5rem;
+  }
+}
+
+/* 휴대폰 가로처럼 높이가 낮은 화면: 위쪽 막대를 고정하지 않아 본문 공간을 넓힙니다. */
+@media (max-height: 500px) {
+  .topbar {
+    position: static;
   }
 }
 
@@ -221,15 +592,20 @@ p {
     gap: 0.75rem;
     min-height: 2.75rem;
     padding: 0 0.75rem;
-    border-radius: 0.5rem;
     font-size: 1rem;
+    border-radius: 0.5rem;
   }
 
   .nav-item.active {
     background: var(--color-primary-soft);
   }
 
-  .content {
+  .topbar {
+    padding: 0 2.5rem;
+  }
+
+  .content,
+  .topbar.has-switcher + .content {
     max-width: 72rem;
     padding: 2rem 2.5rem;
   }

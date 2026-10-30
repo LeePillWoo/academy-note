@@ -1,3 +1,5 @@
+import PageHeader from '../components/PageHeader'
+
 interface PlaceholderPageProps {
   title: string
   description: string
@@ -7,7 +9,7 @@ interface PlaceholderPageProps {
 export default function PlaceholderPage({ title, description }: PlaceholderPageProps) {
   return (
     <section>
-      <h1 className="page-title">{title}</h1>
+      <PageHeader title={title} />
       <div className="card">
         <p>{description}</p>
         <p className="muted">준비 중입니다.</p>
