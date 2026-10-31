@@ -18,6 +18,7 @@ import { useSelectedChild } from '../data/SelectedChild'
 import { addDays, formatDate, today } from '../utils/date'
 import PaymentRow from '../components/PaymentRow'
 import PaymentSheet from '../components/PaymentSheet'
+import TodayStudy from '../components/study/TodayStudy'
 
 export default function HomePage() {
   const { children } = useChildren()
@@ -62,6 +63,10 @@ export default function HomePage() {
     )
   }
 
+  // 오늘 학습은 위에서 고른 자녀, 전체면 모든 자녀
+  const studyChildren = selectedChild ? [selectedChild] : children
+  const todayStudy = <TodayStudy shownChildren={studyChildren} todayStr={todayStr} />
+
   if (academies.length === 0) {
     return (
       <section className="narrow">
@@ -77,6 +82,7 @@ export default function HomePage() {
             학원 등록하기
           </Link>
         </div>
+        {todayStudy}
       </section>
     )
   }
@@ -103,6 +109,7 @@ export default function HomePage() {
         )}
         <Link to="/calendar" className="section-link">달력에서 다른 날 보기</Link>
       </div>
+      {todayStudy}
       {openMakeups.length > 0 && (
         <div className="home-section">
           <h2 className="section-heading">

@@ -57,7 +57,7 @@ function ChildForm({ childId }: { childId?: string }) {
 
   async function handleDelete() {
     if (!original) return
-    const message = `'${original.name}'${objectParticle(original.name)} 삭제할까요?\n삭제하면 되돌릴 수 없습니다.`
+    const message = `'${original.name}'${objectParticle(original.name)} 삭제할까요?\n학원(출석·보강·납부 기록)과 학습(과목·체크 기록)도 함께 지워지며 되돌릴 수 없습니다.`
     if (!window.confirm(message)) return
     setBusy(true)
     try {

@@ -5,6 +5,9 @@ import HomePage from './pages/HomePage'
 import MakeupsPage from './pages/MakeupsPage'
 import PaymentsPage from './pages/PaymentsPage'
 import TimetablePage from './pages/TimetablePage'
+import StudyPage from './pages/study/StudyPage'
+import SubjectFormPage from './pages/study/SubjectFormPage'
+import SubjectsPage from './pages/study/SubjectsPage'
 import AcademiesPage from './pages/settings/AcademiesPage'
 import AcademyFormPage from './pages/settings/academy/AcademyFormPage'
 import ChildFormPage from './pages/settings/ChildFormPage'
@@ -24,6 +27,10 @@ export default function App() {
         <Route index element={<HomePage />} />
         <Route path="calendar" element={<CalendarPage />} />
         <Route path="timetable" element={<TimetablePage />} />
+        <Route path="study" element={<StudyPage />} />
+        <Route path="study/subjects" element={<SubjectsPage />} />
+        <Route path="study/subjects/new" element={<SubjectFormPage />} />
+        <Route path="study/subjects/:subjectId" element={<SubjectFormPage />} />
         <Route path="payments" element={<PaymentsPage />} />
         <Route path="makeups" element={<MakeupsPage />} />
         <Route path="settings" element={<SettingsPage />} />

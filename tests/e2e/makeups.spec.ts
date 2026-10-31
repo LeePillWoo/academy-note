@@ -32,7 +32,7 @@ test('보강: 결석하면 생기고, 날짜 잡기(규칙 경고), 완료와 �
 
   // 홈: 남은 보강 1개, 미정
   await page.goto('/')
-  const homeMakeups = page.locator('.home-section').nth(1).locator('.list-button')
+  const homeMakeups = page.locator('.home-section', { hasText: '남은 보강' }).locator('.list-button')
   await expect(homeMakeups).toHaveCount(1)
   await expect(homeMakeups.first()).toContainText('11월 3일 (화) 결석분 · 11월 17일 (화)까지 · 13일 남음')
   await expect(homeMakeups.first()).toContainText('미정')

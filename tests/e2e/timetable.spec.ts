@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
-import { addChildren, expectNoHorizontalOverflow, toggleWeekdays } from './helpers'
+import { addChildren, expectNoHorizontalOverflow, expectSingleA4, printedPageSizes, toggleWeekdays } from './helpers'
 
 // 오늘을 2026-11-04(수)로 고정합니다.
 test.beforeEach(async ({ page }) => {
@@ -74,6 +74,8 @@ test('시간표: 블록 표시, 정보 창, 편집 모드에서 끌어 옮기기
   await expect(printSheet.locator('.print-head')).not.toContainText('둘째')
   await expect(printSheet.locator('.print-day-head')).toHaveCount(5) // 월~금 (주말 수업 없음)
   await page.screenshot({ path: testInfo.outputPath('1b-print.png'), fullPage: true })
+  // 학습 인쇄(이름 있는 용지)와 합친 뒤에도 시간표는 A4 세로 한 장
+  if (testInfo.project.name === 'PC') expectSingleA4(await printedPageSizes(page, testInfo.outputPath('timetable-print.pdf')), 'portrait')
   await page.emulateMedia({ media: 'screen' })
   await switcher.getByRole('button', { name: '전체' }).click()
   await expect(blocks).toHaveCount(3)

@@ -14,7 +14,17 @@ export interface DataStorage {
 }
 
 export function emptyDatabase(): Database {
-  return { children: [], academies: [], lessons: [], makeups: [], payments: [], notificationRules: [] }
+  return {
+    children: [],
+    academies: [],
+    lessons: [],
+    makeups: [],
+    payments: [],
+    notificationRules: [],
+    subjects: [],
+    studyTasks: [],
+    studyWeeks: [],
+  }
 }
 
 export function collectionNames(): CollectionName[] {

@@ -1,3 +1,4 @@
+import { childStudyRemovalChanges } from './study/cascade'
 import type { Change, Database } from './types'
 
 /**
@@ -18,12 +19,13 @@ export function academyRemovalChanges(data: Database, academyId: string): Change
   ]
 }
 
-/** 자녀를 지울 때 함께 지울 것들. 자녀와 그 자녀의 학원(과 학원에 딸린 기록). */
+/** 자녀를 지울 때 함께 지울 것들. 자녀와 그 자녀의 학원(과 학원에 딸린 기록), 학습 기록(과목, 학습 내용, 체크). */
 export function childRemovalChanges(data: Database, childId: string): Change[] {
   return [
     ...data.academies
       .filter((academy) => academy.childId === childId)
       .flatMap((academy) => academyRemovalChanges(data, academy.id)),
+    ...childStudyRemovalChanges(data, childId),
     { type: 'remove', collection: 'children', id: childId },
   ]
 }

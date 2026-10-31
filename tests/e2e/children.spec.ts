@@ -23,8 +23,8 @@ test('자녀 등록, 선택, 순서 변경, 수정, 삭제', async ({ page }, te
   await expect(page.getByRole('link', { name: '학원 등록하기' })).toBeVisible()
   await expect(switcher).toHaveCount(0)
 
-  // 설정 > 자녀에서 둘째 추가 (색은 초록)
-  await nav.getByRole('link', { name: '설정' }).click()
+  // 설정 > 자녀에서 둘째 추가 (색은 초록). 설정은 세로 화면이면 위쪽 톱니, 가로 화면이면 왼쪽 메뉴
+  await page.getByRole('link', { name: '설정', exact: true }).click()
   await page.getByRole('link', { name: /^자녀/ }).click()
   await page.getByRole('link', { name: '자녀 추가' }).click()
   await page.getByLabel('이름').fill('둘째')

@@ -21,12 +21,17 @@ public class PrintPlugin extends Plugin {
     @PluginMethod
     public void print(PluginCall call) {
         String name = call.getString("name", "학원노트");
+        // 학습 계획표·체크표는 A4 가로, 나머지(시간표, 요일별)는 A4 세로
+        boolean landscape = Boolean.TRUE.equals(call.getBoolean("landscape", false));
+        PrintAttributes.MediaSize mediaSize = landscape
+                ? PrintAttributes.MediaSize.ISO_A4.asLandscape()
+                : PrintAttributes.MediaSize.ISO_A4.asPortrait();
         getActivity().runOnUiThread(() -> {
             try {
                 PrintManager manager = (PrintManager) getContext().getSystemService(Context.PRINT_SERVICE);
                 PrintDocumentAdapter adapter = getBridge().getWebView().createPrintDocumentAdapter(name);
                 PrintAttributes attributes = new PrintAttributes.Builder()
-                        .setMediaSize(PrintAttributes.MediaSize.ISO_A4)
+                        .setMediaSize(mediaSize)
                         .setColorMode(PrintAttributes.COLOR_MODE_COLOR)
                         .build();
                 manager.print(name, adapter, attributes);

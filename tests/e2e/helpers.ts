@@ -16,6 +16,31 @@ export async function toggleWeekdays(page: Page, label: string, days: string[]) 
   for (const day of days) await group.getByRole('button', { name: day, exact: true }).click()
 }
 
+interface SubjectOptions {
+  name: string
+  /** 색 이름. 예: '초록' */
+  color?: string
+  /** 학습 내용. days는 기본(평일)에서 켜고 끌 요일 */
+  tasks: { name: string; days?: string[] }[]
+}
+
+/** 학습 화면에서 볼 자녀(위에서 고른 자녀, 자녀가 한 명이면 그 자녀)에게 과목과 학습 내용을 등록합니다. */
+export async function addSubject(page: Page, options: SubjectOptions) {
+  await page.goto('/#/study/subjects/new')
+  await page.getByLabel('과목 이름').fill(options.name)
+  if (options.color) await page.getByRole('radio', { name: options.color }).check()
+  for (let index = 0; index < options.tasks.length; index++) {
+    // 새 과목 화면에는 빈 학습 내용 줄이 하나 있습니다.
+    if (index > 0) await page.getByRole('button', { name: '학습 내용 추가' }).click()
+    const task = options.tasks[index]
+    const label = `학습 내용 ${index + 1}`
+    await page.getByLabel(`${label} 이름`).fill(task.name)
+    if (task.days) await toggleWeekdays(page, label, task.days)
+  }
+  await page.getByRole('button', { name: '저장' }).click()
+  await expect(page.getByRole('heading', { name: '과목 추가' })).toHaveCount(0)
+}
+
 /** 내용이 화면보다 넓어지지 않았는지 검사합니다. 넓어지면 휴대폰 브라우저가 화면 전체를 축소해서 보여줍니다. */
 export async function expectNoHorizontalOverflow(page: Page) {
   const { clientWidth, scrollWidth } = await page.evaluate(() => ({
@@ -68,4 +93,24 @@ export async function pickDate(page: Page, fieldLabel: string, dateLabel: string
   // 날짜 단추 이름은 '2026년 11월 7일 (토)' 뒤에 ', 오늘' 같은 말이 붙을 수 있어서 앞부분으로 찾습니다.
   await picker.locator(`button[aria-label^="${dateLabel}"]`).click()
   await expect(picker).toBeHidden()
+}
+
+/**
+ * 인쇄 결과(PDF)의 쪽마다 [가로, 세로] 크기(pt). A4 세로는 약 [595, 842], 가로는 [842, 595]입니다.
+ * 화면 인쇄 CSS(@page)대로 PDF를 만들어 쪽 수와 용지 방향을 확인합니다. PDF를 못 만드는 환경(창을 띄운 실행)이면 null
+ */
+export async function printedPageSizes(page: Page, path: string): Promise<[number, number][] | null> {
+  const pdf = await page.pdf({ path, preferCSSPageSize: true, printBackground: true }).catch(() => null)
+  if (!pdf) return null
+  return [...pdf.toString('latin1').matchAll(/\/MediaBox\s*\[\s*0 0 ([\d.]+) ([\d.]+)\s*\]/g)].map(
+    (match) => [Math.round(Number(match[1])), Math.round(Number(match[2]))],
+  )
+}
+
+/** A4 한 장인지, 방향이 맞는지 */
+export function expectSingleA4(sizes: [number, number][] | null, orientation: 'portrait' | 'landscape') {
+  if (!sizes) return
+  expect(sizes, '인쇄가 한 장이어야 합니다').toHaveLength(1)
+  const [width, height] = sizes[0]
+  expect(orientation === 'portrait' ? width < height : width > height, `A4 ${orientation === 'portrait' ? '세로' : '가로'}`).toBe(true)
 }

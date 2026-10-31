@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { getFamilyState, setFamilyState } from './cloud/family'
 import { createIndexedDbStorage } from './indexedDbStorage'
 import { applyChanges, emptyDatabase, type DataStorage } from './storage'
@@ -7,6 +7,11 @@ import type { Change, Database } from './types'
 interface DataContextValue {
   data: Database
   apply(changes: Change[]): Promise<void>
+  /**
+   * 바로 앞 저장이 끝난 뒤의 최신 데이터로 변경을 만들어 저장합니다. 저장은 하나씩 차례로 합니다.
+   * 한 기록을 고쳐 쓰는 변경(예: 학습 체크 주 묶음)을 빠르게 연달아 해도 앞의 변경이 사라지지 않습니다.
+   */
+  update(build: (data: Database) => Change[]): Promise<void>
 }
 
 type LoadState =
@@ -39,6 +44,10 @@ function getStorage(): Promise<DataStorage> {
 export function DataProvider({ children }: { children: ReactNode }) {
   const [load, setLoad] = useState<LoadState>({ status: 'loading' })
   const [data, setData] = useState<Database>(emptyDatabase)
+  // update()가 쓰는 최신 데이터와 저장 차례
+  const latest = useRef(data)
+  latest.current = data
+  const queue = useRef<Promise<void>>(Promise.resolve())
 
   useEffect(() => {
     let cancelled = false
@@ -70,6 +79,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
       async apply(changes) {
         await load.storage.apply(changes)
         setData((prev) => applyChanges(prev, changes))
+      },
+      update(build) {
+        const run = queue.current.then(async () => {
+          const changes = build(latest.current)
+          if (changes.length === 0) return
+          await load.storage.apply(changes)
+          latest.current = applyChanges(latest.current, changes)
+          setData((prev) => applyChanges(prev, changes))
+        })
+        queue.current = run.catch(() => undefined)
+        return run
       },
     }
   }, [load, data])

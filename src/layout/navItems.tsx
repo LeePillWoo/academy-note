@@ -5,7 +5,17 @@ export interface NavItem {
   to: string
   label: string
   icon: ReactNode
+  /** 가로 화면의 왼쪽 메뉴에만 둡니다. (세로 화면은 위쪽 막대의 단추로) */
+  railOnly?: boolean
 }
+
+// 톱니바퀴 (Lucide 'settings' 아이콘 모양, ISC 사용 허가)
+export const settingsIcon = (
+  <Icon>
+    <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+    <circle cx="12" cy="12" r="3" />
+  </Icon>
+)
 
 export const navItems: NavItem[] = [
   {
@@ -24,6 +34,18 @@ export const navItems: NavItem[] = [
     icon: <Icon><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M3 10h18M9 4v16M15 4v16" /></Icon>,
   },
   {
+    to: '/study',
+    label: '학습',
+    // 체크 표시가 있는 클립보드 (Lucide 'clipboard-check' 아이콘 모양, ISC 사용 허가)
+    icon: (
+      <Icon>
+        <rect x="8" y="2" width="8" height="4" rx="1" />
+        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+        <path d="m9 14 2 2 4-4" />
+      </Icon>
+    ),
+  },
+  {
     to: '/payments',
     label: '납부',
     icon: <Icon><rect x="2" y="5" width="20" height="14" rx="2" /><path d="M2 10h20M6 15h4" /></Icon>,
@@ -36,12 +58,7 @@ export const navItems: NavItem[] = [
   {
     to: '/settings',
     label: '설정',
-    // 톱니바퀴 (Lucide 'settings' 아이콘 모양, ISC 사용 허가)
-    icon: (
-      <Icon>
-        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
-        <circle cx="12" cy="12" r="3" />
-      </Icon>
-    ),
+    icon: settingsIcon,
+    railOnly: true,
   },
 ]

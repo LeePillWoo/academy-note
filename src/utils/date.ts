@@ -13,6 +13,14 @@ export const WEEKDAY_NAMES = ['일', '월', '화', '수', '목', '금', '토'] a
 /** 수업 요일을 고를 때 보여주는 순서 (월요일부터) */
 export const WEEKDAYS_FROM_MONDAY: Weekday[] = [1, 2, 3, 4, 5, 6, 0]
 
+/** 평일 (월~금). 새 학습 내용의 기본 계획 요일입니다. */
+export const WEEKDAYS: Weekday[] = [1, 2, 3, 4, 5]
+
+/** 요일 목록을 월요일부터 순서로 정렬합니다. 중복은 없앱니다. */
+export function sortWeekdays(days: Weekday[]): Weekday[] {
+  return WEEKDAYS_FROM_MONDAY.filter((day) => days.includes(day))
+}
+
 const pad = (n: number) => String(n).padStart(2, '0')
 
 export function toDateStr(date: Date): DateStr {

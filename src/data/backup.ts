@@ -104,4 +104,7 @@ export const COLLECTION_LABELS: Record<CollectionName, string> = {
   makeups: '보강',
   payments: '납부',
   notificationRules: '알림 설정',
+  subjects: '과목',
+  studyTasks: '학습 내용',
+  studyWeeks: '학습 체크(주)',
 }

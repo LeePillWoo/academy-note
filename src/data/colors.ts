@@ -23,13 +23,15 @@ function mix(hex: string, amount: number): string {
 }
 
 /**
- * 칩에 쓰는 옅은 색 값: 옅은 바탕(--chip-bg), 테두리(--chip-border), 진한 글자(--chip-fg).
+ * 칩과 학습 보드에 쓰는 색 값: 옅은 바탕(--chip-bg), 테두리(--chip-border), 빈 체크 칸 테두리(--chip-outline),
+ * 진한 글자(--chip-fg), 원래 색(--chip-solid).
  */
 export function softColorVars(hex: string): Record<string, string> {
   const [r, g, b] = rgb(hex)
   return {
     '--chip-bg': `rgb(${r} ${g} ${b} / 0.14)`,
     '--chip-border': `rgb(${r} ${g} ${b} / 0.28)`,
+    '--chip-outline': `rgb(${r} ${g} ${b} / 0.55)`,
     '--chip-fg': mix(hex, -0.35),
     '--chip-solid': hex,
   }

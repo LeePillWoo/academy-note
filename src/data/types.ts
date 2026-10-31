@@ -210,6 +210,37 @@ export interface NotificationRule extends BaseRecord {
 }
 
 /** 저장하는 데이터 종류입니다. 새 종류는 여기에 추가합니다. */
+// ===== 학습 체크 (예전 '학습체크' 앱에서 합침) =====
+
+/** 과목 (자녀별). 학습 보드의 묶음 이름입니다. 예: 수학, 영어, 독서 */
+export interface Subject extends BaseRecord {
+  childId: string
+  name: string
+  color: string
+  order: number
+}
+
+/** 학습 내용. 과목 아래 한 줄입니다. 예: 문제집 2쪽, 영어 단어 20개 */
+export interface StudyTask extends BaseRecord {
+  subjectId: string
+  name: string
+  /** 계획한 요일. 계획하지 않은 요일에도 체크할 수는 있습니다. */
+  weekdays: Weekday[]
+  order: number
+}
+
+/**
+ * 한 자녀의 한 주(월~일) 학습 체크 묶음. id는 `${childId}:${weekStart}`
+ * 체크 한 칸을 기록 하나로 두면 가족 공유(Firestore)에서 읽기 횟수가 금방 커져서 주 단위로 묶습니다.
+ */
+export interface StudyWeek extends BaseRecord {
+  childId: string
+  /** 그 주의 월요일 */
+  weekStart: DateStr
+  /** 한 칸들. 각각 `${taskId}:${date}` */
+  done: string[]
+}
+
 export interface Collections {
   children: Child
   academies: Academy
@@ -217,6 +248,9 @@ export interface Collections {
   makeups: Makeup
   payments: Payment
   notificationRules: NotificationRule
+  subjects: Subject
+  studyTasks: StudyTask
+  studyWeeks: StudyWeek
 }
 
 export type CollectionName = keyof Collections

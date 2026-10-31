@@ -17,7 +17,7 @@ describe('백업 파일 읽기', () => {
     if ('backup' in result) {
       expect(result.summary).toEqual({
         exportedAt: '2026-10-30T10:00:00.000Z',
-        counts: { children: 1, academies: 0, lessons: 0, makeups: 0, payments: 0, notificationRules: 0 },
+        counts: { children: 1, academies: 0, lessons: 0, makeups: 0, payments: 0, notificationRules: 0, subjects: 0, studyTasks: 0, studyWeeks: 0 },
         total: 1,
       })
       expect(result.backup.data.children[0].name).toBe('첫째')
@@ -57,5 +57,20 @@ describe('복원', () => {
     const changes = restoreChanges(current, imported, 'merge')
     // a는 내 것이 더 최신이라 그대로, c는 새로 추가
     expect(changes.map((c) => `${c.type}:${c.type === 'put' ? c.item.id : c.id}`)).toEqual(['put:c'])
+  })
+})
+
+describe('학습 기록도 백업에 포함', () => {
+  it('v1.0.0 백업(학습 없음)도 읽고, 학습 기록은 그대로 왕복', () => {
+    const old = JSON.stringify({ app: 'academy-note', version: 1, exportedAt: '2026-10-30T10:00:00.000Z', data: { children: [] } })
+    const oldResult = parseBackup(old)
+    expect('backup' in oldResult && oldResult.backup.data.studyWeeks).toEqual([])
+
+    const data = { ...db([child('a', '첫째', '2026-10-30')]) }
+    data.subjects = [{ id: 's1', childId: 'a', name: '수학', color: '#6366f1', order: 0, createdAt: '', updatedAt: '' }]
+    data.studyWeeks = [{ id: 'a:2026-10-26', childId: 'a', weekStart: '2026-10-26', done: ['t1:2026-10-27'], createdAt: '', updatedAt: '' }]
+    const result = parseBackup(serializeBackup(createBackup(data)))
+    expect('backup' in result && result.backup.data.studyWeeks[0].done).toEqual(['t1:2026-10-27'])
+    expect('summary' in result && result.summary.counts.subjects).toBe(1)
   })
 })

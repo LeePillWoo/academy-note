@@ -166,6 +166,25 @@ textarea {
   font-weight: 800;
 }
 
+/*
+ * 설정: 세로 화면은 아래쪽 메뉴 칸이 모자라서 위쪽 막대 오른쪽의 톱니 단추로 엽니다.
+ * 가로 화면은 왼쪽 메뉴에 설정이 있으므로 톱니 단추를 숨깁니다. (아래 가로 화면 구역)
+ */
+.topbar-settings {
+  margin-right: -0.5rem;
+  margin-left: auto;
+  color: var(--color-muted);
+}
+
+.topbar-settings.active {
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+.nav-item.is-rail-only {
+  display: none;
+}
+
 /* 아래쪽 탭 메뉴에 내용이 가려지지 않도록 아래 여백을 메뉴 높이만큼 둡니다. */
 .content {
   padding: 1rem calc(1rem + env(safe-area-inset-right)) calc(var(--nav-height) + env(safe-area-inset-bottom) + 1rem)
@@ -1353,6 +1372,14 @@ details > summary.summary {
     font-size: 0.6875rem;
   }
 
+  .nav-item.is-rail-only {
+    display: flex;
+  }
+
+  .topbar-settings {
+    display: none;
+  }
+
   .nav-icon {
     width: 2.75rem;
     height: 2.25rem;
@@ -1683,6 +1710,10 @@ details > summary.summary {
 
 /* 좁은 휴대폰에서 자녀 선택이 있으면 위쪽 막대에 로고만 (이름은 숨김) */
 @media (max-width: 419px) {
+  .topbar.has-switcher {
+    gap: 0.5rem;
+  }
+
   .topbar.has-switcher .brand-text {
     display: none;
   }
@@ -2188,6 +2219,8 @@ details > summary.summary {
     background: #ffffff;
   }
 
+  /* 앱 화면은 통째로 뺍니다. (#root 상자가 남아 있으면 이름 있는 용지(학습 인쇄)의 첫 장이 빈 종이로 나옴) */
+  #root,
   .shell,
   dialog {
     display: none !important;
@@ -2378,4 +2411,1182 @@ code {
   font-size: 0.9em;
   background: var(--color-surface-muted);
   border-radius: 0.25rem;
+}
+
+/* =====================================================================
+ * 학습 (예전 '학습체크' 앱에서 옮김, 2026-10-31)
+ * 주간 학습 보드(요일별 · 계획표 · 체크표), 과목 화면, 홈의 오늘 학습, 학습 인쇄
+ * ===================================================================== */
+
+/* 화면 읽기 프로그램에만 읽히는 글자 */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  border: 0;
+  clip: rect(0 0 0 0);
+}
+
+.weekday-toggle:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* 학습 내용 편집 줄 (과목 화면) */
+.task-editor {
+  display: grid;
+  gap: 0.625rem;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0.75rem;
+}
+
+.task-editor-head {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+}
+
+.task-editor-head .input {
+  flex: 1;
+  min-width: 0;
+  margin-right: 0.25rem;
+}
+
+/* 좁은 화면에서 입력칸 자리를 넓히려고 아이콘 단추를 조금 좁게 */
+.task-editor-head .icon-btn {
+  width: 2.25rem;
+}
+
+/* 학원노트의 진행 막대는 위 여백이 있어서 학습 보드 안에서는 뺍니다. */
+.week-summary .progress,
+.subject-progress .progress,
+.study-child-card .progress {
+  margin-top: 0;
+}
+
+.progress > span {
+  transition: width 0.2s;
+}
+
+/* ===== 주간 학습 보드 ===== */
+.board-card {
+  gap: 0.75rem;
+}
+
+/* 위쪽 줄: 왼쪽 [‹ 10월 26일 ~ 11월 1일 ›], 오른쪽 [이번 주] 표시나 [이번 주로] 단추 (좁으면 아래로) */
+.board-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.week-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.week-nav strong {
+  font-size: 1.0625rem;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.week-badge {
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+
+/* 이번 주 전체 진행: 완료 수와 막대 */
+.week-summary {
+  display: grid;
+  gap: 0.375rem;
+}
+
+.week-summary-text {
+  display: flex;
+  align-items: baseline;
+  gap: 0.375rem;
+  font-size: 0.9375rem;
+}
+
+.week-summary-text strong {
+  font-size: 1.25rem;
+}
+
+.board-empty {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.5rem 0;
+}
+
+/*
+ * 표: 왼쪽 열은 과목·학습 내용, 나머지 7열은 월~일.
+ * table-layout: fixed 로 열 너비를 고정해 내용이 길어도 화면보다 넓어지지 않습니다.
+ */
+.board-table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.board-table .col-label {
+  width: 5.5rem;
+}
+
+.board-table th,
+.board-table td {
+  padding: 0;
+  vertical-align: middle;
+}
+
+/* 요일 줄: 스크롤해도 위쪽 막대 아래에 붙어 따라옵니다. (--topbar-height 는 AppShell에서 넣음) */
+.board-head th {
+  position: sticky;
+  top: var(--topbar-height, 0px);
+  z-index: 1;
+  height: 3rem;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.day-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.125rem;
+}
+
+.day-name {
+  color: var(--color-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.wd-0 .day-name {
+  color: var(--color-sunday);
+}
+
+.wd-6 .day-name {
+  color: var(--color-saturday);
+}
+
+.day-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  padding: 0 0.25rem;
+  color: var(--color-text);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  border-radius: 999px;
+}
+
+/* 오늘: 날짜를 남색 동그라미로, 그 열은 옅은 남색 바탕 */
+.is-today .day-num {
+  color: var(--color-on-primary);
+  background: var(--color-primary);
+}
+
+.board-table td.is-today {
+  background: rgb(79 70 229 / 0.06);
+}
+
+/* 과목 줄: 과목 색을 옅게 깐 띠. 왼쪽 띠는 진한 과목 색 (색 값은 colors.ts softColorVars) */
+.subject-row th {
+  padding: 0.25rem 0.5rem 0.25rem 0.5rem;
+  text-align: left;
+  background: var(--chip-bg);
+  border-top: 1px solid var(--color-border);
+  border-left: 3px solid var(--chip-solid);
+}
+
+.subject-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.5rem;
+}
+
+/* 과목 이름 (누르면 과목 설정 화면) */
+.subject-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-width: 0;
+  max-width: 100%;
+  margin-left: -0.375rem;
+  padding: 0.25rem 0.25rem 0.25rem 0.375rem;
+  color: var(--chip-fg);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  text-decoration: none;
+  border-radius: 0.5rem;
+}
+
+.subject-name {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.subject-link svg {
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+@media (hover: hover) {
+  .subject-link:hover {
+    background: var(--chip-border);
+  }
+}
+
+.subject-link:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+/* 과목별 진행: 오른쪽에 3/10 과 짧은 막대 (막대 색은 과목 색) */
+.subject-progress {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+  color: var(--chip-fg);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.subject-progress .progress {
+  width: 3.5rem;
+  background: rgb(255 255 255 / 0.7);
+}
+
+.subject-progress .progress > span {
+  background: var(--chip-solid);
+}
+
+/* 학습 내용 줄 */
+.task-row th,
+.task-row td {
+  height: 2.75rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.task-row th {
+  text-align: left;
+}
+
+/* 이름은 두 줄까지만 보이고 넘치면 자릅니다. */
+.task-name {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  padding-right: 0.5rem;
+  overflow: hidden;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.empty-row th {
+  padding: 0.625rem 0.5rem;
+  color: var(--color-muted);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  text-align: left;
+  border-top: 1px solid var(--color-border);
+}
+
+/*
+ * 체크 칸: 단추는 칸 전체(누르기 쉽게), 보이는 네모는 가운데 1.75rem.
+ * - 계획한 요일: 과목 색 테두리의 빈 네모
+ * - 계획하지 않은 요일: 옅은 점
+ * - 체크함: 과목 색으로 채우고 흰 체크 표시
+ * - 계획했는데 지난 날: 옅은 분홍 (놓친 날)
+ */
+.check-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 2.75rem;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.check-box {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* 휴대폰 칸 너비(약 33px)에서 옆 칸과 붙어 보이지 않도록 조금 작게 */
+  width: 1.625rem;
+  height: 1.625rem;
+  color: #ffffff;
+  border: 2px solid transparent;
+  border-radius: 0.5rem;
+  transition: transform 0.1s, background-color 0.15s, border-color 0.15s;
+}
+
+.check-box::before {
+  content: '';
+  display: none;
+  width: 0.375rem;
+  height: 0.375rem;
+  background: var(--color-border);
+  border-radius: 50%;
+}
+
+.check-cell:not(.is-planned):not(.is-done) .check-box::before {
+  display: block;
+}
+
+.check-cell.is-planned .check-box {
+  background: var(--color-surface);
+  border-color: var(--chip-outline);
+}
+
+.check-cell.is-missed .check-box {
+  background: #fff1f2;
+  border-color: #fecdd3;
+}
+
+.check-cell.is-done .check-box {
+  background: var(--chip-solid);
+  border-color: var(--chip-solid);
+}
+
+.check-cell:active .check-box {
+  transform: scale(0.9);
+}
+
+.check-cell:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+  border-radius: 0.5rem;
+}
+
+@media (hover: hover) {
+  .check-cell:not(.is-done):hover .check-box {
+    border-color: var(--chip-solid);
+  }
+}
+
+/* 아래 줄: 요일마다 완료/계획 수 */
+.board-foot th,
+.board-foot td {
+  height: 2rem;
+  color: var(--color-muted);
+  font-size: 0.6875rem;
+  text-align: center;
+  border-top: 1px solid var(--color-border);
+}
+
+.board-foot th {
+  font-weight: 500;
+  text-align: left;
+}
+
+.board-foot td.is-today {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+.board-hint {
+  margin-top: -0.25rem;
+}
+
+/* 제목 오른쪽: [계획표 | 체크표] 와 [인쇄] */
+.board-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+
+/* 보드 아래 단추 줄: [과목 추가] [과목 목록·순서] */
+.board-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.board-links .btn {
+  flex: 1 1 auto;
+}
+
+/* ===== 학습: 전체 보기 (자녀마다 이번 주 진행 카드) ===== */
+.study-overview {
+  display: grid;
+  gap: 0.75rem;
+}
+
+@media (min-width: 720px) {
+  .study-overview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.study-child-card {
+  display: grid;
+  gap: 0.5rem;
+  width: 100%;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.study-child-card:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) {
+  .study-child-card:hover {
+    border-color: var(--color-primary);
+  }
+}
+
+.study-child-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.0625rem;
+  font-weight: 700;
+}
+
+.study-child-head svg {
+  margin-left: auto;
+  color: var(--color-muted);
+}
+
+.study-child-stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.25rem 0.75rem;
+  color: var(--color-muted);
+  font-size: 0.875rem;
+}
+
+.study-child-stats strong {
+  color: var(--color-text);
+}
+
+/* ===== 홈: 오늘 학습 ===== */
+.study-today {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.study-today-child {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 0.9375rem;
+}
+
+.study-today-child .muted {
+  font-weight: 400;
+}
+
+.study-today-list {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.study-today-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.study-today .plan-item {
+  flex: 1;
+  min-width: 0;
+  min-height: 2.5rem;
+  align-items: center;
+  font-size: 0.9375rem;
+}
+
+.study-today .plan-item .check-box {
+  width: 1.375rem;
+  height: 1.375rem;
+  margin-top: 0;
+}
+
+.study-today-subject {
+  flex-shrink: 0;
+  max-width: 40%;
+  padding: 0.125rem 0.5rem;
+  overflow: hidden;
+  color: var(--chip-fg);
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  background: var(--chip-bg);
+  border-radius: 999px;
+}
+
+/* ===== 계획표 (과목 줄, 칸 안에 그날 학습 내용) ===== */
+/* 칸이 넓어야 해서 표에 최소 너비를 두고, 좁은 화면에서는 옆으로 밀어서 봅니다. 과목 열은 왼쪽에 붙어 있습니다. */
+.plan-wrap {
+  display: grid;
+  gap: 0.375rem;
+}
+
+.plan-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.plan-table {
+  min-width: 41.5rem;
+}
+
+.plan-table .col-label {
+  width: 5.25rem;
+}
+
+/* 옆으로 미는 표라서 요일 줄은 위에 붙지 않습니다. 대신 왼쪽 열이 옆으로 밀어도 붙어 있습니다. */
+.plan-table.board-table .board-head th {
+  top: auto;
+}
+
+.plan-table .plan-corner,
+.plan-table .plan-subject,
+.plan-table .plan-foot-label {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: var(--color-surface);
+}
+
+.plan-table .plan-corner {
+  z-index: 3;
+}
+
+/* 과목 칸: 과목 색을 옅게 깐 바탕(밀어도 뒤가 비치지 않게 흰색 위에 얹음), 왼쪽 띠. 칸이 좁아 화살표는 빼고 긴 이름은 두 줄로 */
+.plan-table .plan-subject {
+  padding: 0.5rem 0.375rem 0.5rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+  background: linear-gradient(var(--chip-bg), var(--chip-bg)) var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  border-left: 3px solid var(--chip-solid);
+}
+
+.plan-subject .subject-link,
+.dayplan-subject .subject-link {
+  max-width: 100%;
+  font-size: 0.9375rem;
+}
+
+.plan-subject .subject-link svg,
+.dayplan-subject .subject-link svg {
+  display: none;
+}
+
+.plan-subject .subject-name,
+.dayplan-subject .subject-name {
+  white-space: normal;
+}
+
+.plan-subject-sub {
+  display: block;
+  margin-top: 0.125rem;
+  color: var(--chip-fg);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.plan-cell {
+  min-height: 3.5rem;
+  padding: 0.375rem 0.25rem;
+  vertical-align: top;
+  border-top: 1px solid var(--color-border);
+}
+
+.plan-row td + td {
+  border-left: 1px solid var(--color-border);
+}
+
+.plan-items {
+  display: grid;
+  gap: 0.125rem;
+}
+
+/* 칸 안의 학습 내용 하나: 작은 체크 네모와 이름. 누르면 체크 */
+.plan-item {
+  display: flex;
+  gap: 0.375rem;
+  align-items: flex-start;
+  width: 100%;
+  min-height: 1.875rem;
+  padding: 0.25rem 0.25rem;
+  color: var(--color-text);
+  font-size: 0.8125rem;
+  line-height: 1.25;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.plan-item .check-box {
+  flex-shrink: 0;
+  width: 1.125rem;
+  height: 1.125rem;
+  margin-top: 0.0625rem;
+  border-radius: 0.3125rem;
+}
+
+.plan-item .check-box::before {
+  width: 0.25rem;
+  height: 0.25rem;
+}
+
+.plan-item.is-planned .check-box {
+  background: var(--color-surface);
+  border-color: var(--chip-outline);
+}
+
+.plan-item.is-missed .check-box {
+  background: #fff1f2;
+  border-color: #fecdd3;
+}
+
+.plan-item.is-done .check-box {
+  background: var(--chip-solid);
+  border-color: var(--chip-solid);
+}
+
+.plan-item.is-done .plan-item-name {
+  color: var(--color-muted);
+  text-decoration: line-through;
+}
+
+.plan-item-name {
+  min-width: 0;
+}
+
+.plan-item:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -1px;
+}
+
+@media (hover: hover) {
+  .plan-item:hover {
+    background: var(--chip-bg);
+  }
+}
+
+.plan-hint {
+  font-size: 0.8125rem;
+}
+
+/* ===== 요일별 계획표 (왼쪽 요일, 위 과목, 칸 안에 그날 학습 내용) ===== */
+/*
+ * 과목이 화면에 다 들어가면 표를 화면 너비에 맞추고, 과목 줄은 스크롤해도 위쪽 막대 아래에 붙어 따라옵니다.
+ * 과목이 많으면(DayPlanTable이 .is-scrolling을 붙임) 표 안에서 옆으로 밀고, 요일 열은 왼쪽에 붙어 있습니다.
+ */
+.dayplan-table .col-day {
+  width: 3rem;
+}
+
+.dayplan-scroll.is-scrolling {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 옆으로 미는 상자 안에서는 위에 붙는 기능이 동작하지 않아서 끕니다. (켜 두면 과목 줄이 아래로 밀려 보임) */
+.dayplan-scroll.is-scrolling .board-head th {
+  top: auto;
+}
+
+.dayplan-scroll.is-scrolling .dayplan-corner,
+.dayplan-scroll.is-scrolling .dayplan-day {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+}
+
+.dayplan-scroll.is-scrolling .dayplan-corner {
+  z-index: 3;
+}
+
+/* 과목 머리 칸: 과목 색을 옅게 깐 바탕(위에 붙어 따라올 때 뒤가 비치지 않게 흰색 위에 얹음), 위쪽 띠 */
+.dayplan-table .board-head th.dayplan-subject {
+  height: auto;
+  padding: 0.375rem 0.375rem 0.375rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+  background: linear-gradient(var(--chip-bg), var(--chip-bg)) var(--color-surface);
+  border-top: 3px solid var(--chip-solid);
+  border-left: 1px solid var(--color-border);
+}
+
+.dayplan-subject .subject-link {
+  margin-left: -0.375rem;
+}
+
+/* 요일 칸: 요일, 날짜(오늘은 남색 동그라미), 그날 완료/계획 수. 칸 안 학습 내용과 함께 위에서부터 */
+.dayplan-table .dayplan-day,
+.dayplan-table .plan-cell {
+  vertical-align: top;
+}
+
+.dayplan-table .dayplan-day {
+  padding: 0.5rem 0.125rem;
+  background: var(--color-surface-muted);
+  border-top: 1px solid var(--color-border);
+}
+
+/* 요일 칸이 눈에 띄도록 요일과 날짜를 조금 크게 */
+.dayplan-day .day-head {
+  gap: 0.1875rem;
+}
+
+.dayplan-day .day-name {
+  color: var(--color-text);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.dayplan-day .day-num {
+  font-size: 0.875rem;
+}
+
+/* 토요일 파랑, 일요일 빨강은 그대로 */
+.dayplan-day.wd-6 .day-name {
+  color: var(--color-saturday);
+}
+
+.dayplan-day.wd-0 .day-name {
+  color: var(--color-sunday);
+}
+
+.dayplan-day-total {
+  color: var(--color-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.dayplan-day.is-today .dayplan-day-total {
+  color: var(--color-primary);
+}
+
+.dayplan-row td {
+  border-left: 1px solid var(--color-border);
+}
+
+/* 오늘 줄: 옅은 남색 바탕 (요일 칸은 옆으로 밀 때 뒤가 비치지 않게 흰색 위에 얹음) */
+.dayplan-row.is-today td {
+  background: linear-gradient(rgb(79 70 229 / 0.06), rgb(79 70 229 / 0.06)) var(--color-surface);
+}
+
+.dayplan-row.is-today .dayplan-day {
+  background: linear-gradient(rgb(79 70 229 / 0.1), rgb(79 70 229 / 0.1)) var(--color-surface);
+}
+
+/* 칸이 좁아서 학습 내용 안쪽 여백을 줄입니다. */
+.dayplan-table .plan-cell {
+  padding: 0.25rem 0.1875rem;
+}
+
+.dayplan-table .plan-item {
+  gap: 0.3125rem;
+  padding: 0.25rem 0.1875rem;
+}
+
+
+/* 넓은 화면(태블릿 세로 포함): 왼쪽 열을 넓혀 이름이 더 보이게 */
+@media (min-width: 600px) {
+  .board-table .col-label {
+    width: 11rem;
+  }
+
+  .task-name {
+    font-size: 0.875rem;
+  }
+
+  .check-box {
+    width: 1.875rem;
+    height: 1.875rem;
+  }
+
+  .board-foot th,
+  .board-foot td {
+    font-size: 0.75rem;
+  }
+}
+
+
+/*
+ * 휴대폰 세로의 요일별: 과목 4개까지 옆으로 밀지 않고 한 화면 너비에 들어가도록
+ * 카드 옆 여백과 요일 열을 줄이고, 학습 내용을 체크 네모 대신 '칩'으로 보여줍니다. (네모 자리만큼 글자가 넓어짐)
+ * - 아직 안 함: 과목 색 테두리
+ * - 함: 과목 색(진한 쪽)으로 채우고 흰 글자
+ * - 계획했는데 지난 날: 옅은 분홍
+ */
+@media (max-width: 599px) {
+  .board-card.is-view-days {
+    padding-right: 0.625rem;
+    padding-left: 0.625rem;
+  }
+
+  .dayplan-table .col-day {
+    width: 2.75rem;
+  }
+
+  .dayplan-table .board-head th.dayplan-subject {
+    padding: 0.375rem 0.25rem 0.375rem 0.375rem;
+  }
+
+  .dayplan-subject .subject-link {
+    font-size: 0.875rem;
+  }
+
+  /* 칸이 좁아 과목 이름이 한 글자씩 끊기지 않도록 색 점은 뺍니다. (과목 색은 위쪽 띠와 바탕으로 보임) */
+  .dayplan-subject .subject-link .dot {
+    display: none;
+  }
+
+  .dayplan-table .plan-cell {
+    padding: 0.25rem 0.125rem;
+  }
+
+  .dayplan-table .plan-items {
+    gap: 0.25rem;
+  }
+
+  .dayplan-table .plan-item {
+    display: block;
+    min-height: 0;
+    padding: 0.25rem 0.125rem;
+    font-size: 0.75rem;
+    line-height: 1.25;
+    background: var(--color-surface);
+    border: 1px solid var(--chip-outline);
+    border-radius: 0.375rem;
+  }
+
+  .dayplan-table .plan-item .check-box {
+    display: none;
+  }
+
+  .dayplan-table .plan-item.is-missed {
+    background: #fff1f2;
+    border-color: #fecdd3;
+  }
+
+  .dayplan-table .plan-item.is-done {
+    color: #ffffff;
+    font-weight: 600;
+    background: var(--chip-fg);
+    border-color: var(--chip-fg);
+  }
+
+  .dayplan-table .plan-item.is-done .plan-item-name {
+    color: inherit;
+    text-decoration: none;
+  }
+}
+
+@media (min-width: 600px) {
+  .dayplan-table .col-day {
+    width: 4.75rem;
+  }
+
+  .dayplan-table .plan-cell {
+    padding: 0.375rem 0.3125rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .board-table .col-label {
+    width: 14rem;
+  }
+
+  .plan-table .col-label {
+    width: 6.5rem;
+  }
+
+  .plan-item {
+    font-size: 0.875rem;
+  }
+
+  .plan-cell {
+    padding: 0.5rem 0.375rem;
+  }
+
+  .task-row th,
+  .task-row td {
+    height: 3rem;
+  }
+}
+
+/* 휴대폰 가로처럼 높이가 낮은 화면은 위쪽 막대가 붙어 있지 않으므로 요일 줄을 맨 위에 붙입니다. */
+@media (max-height: 500px) {
+  .board-head th {
+    top: 0;
+  }
+}
+
+/* 보기 단추는 글자가 줄바꿈되지 않게 */
+.board-actions .segment > span {
+  padding: 0 0.875rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 419px) {
+  /* 보기 단추 3개와 인쇄 단추가 한 줄에 들어가도록: 단추 여백을 줄이고, 인쇄는 프린터 그림만 (이름은 화면 읽기 프로그램에 그대로) */
+  .board-actions .segment > span {
+    padding: 0 0.625rem;
+  }
+
+  .print-btn {
+    width: 2.75rem;
+    padding: 0;
+  }
+
+  .print-btn .btn-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    white-space: nowrap;
+    clip: rect(0 0 0 0);
+  }
+}
+
+/* ===== 학습 인쇄: 보고 있는 주간표를 A4 한 장에 ===== */
+/*
+ * 시간표 인쇄와 같은 방식입니다. (화면은 빼고 .print-sheet만, 위쪽 '인쇄' 구역 참고)
+ * 계획표·체크표는 A4 가로, 요일별은 요일 7줄이 위아래로 길어서 A4 세로입니다.
+ * 이름 있는 용지(@page 이름)로 나눠서 시간표(이름 없는 기본 용지, A4 세로)와 부딪히지 않게 합니다.
+ */
+@media print {
+  @page study-landscape {
+    size: A4 landscape;
+    margin: 10mm 12mm;
+  }
+
+  @page study-portrait {
+    size: A4 portrait;
+    margin: 10mm 12mm;
+  }
+
+  .print-sheet.is-study {
+    page: study-landscape;
+  }
+
+  .print-sheet.is-study.is-portrait {
+    page: study-portrait;
+  }
+
+  .print-sheet.is-study .print-head {
+    margin-bottom: 3mm;
+    padding-bottom: 2mm;
+  }
+
+  .print-sheet.is-study .print-head h1 {
+    font-size: 16pt;
+  }
+
+  .print-table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    font-size: 9.5pt;
+  }
+
+  .print-table th,
+  .print-table td {
+    padding: 1.5mm;
+    vertical-align: top;
+    border: 0.25mm solid #999999;
+  }
+
+  .print-table tr {
+    break-inside: avoid;
+  }
+
+  .print-table thead th {
+    padding: 1mm;
+    color: #111111;
+    font-size: 10pt;
+    font-weight: 700;
+    text-align: center;
+    background: #f1f2f6;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .print-table thead th.wd-0 {
+    color: #c0262d;
+  }
+
+  .print-table thead th.wd-6 {
+    color: #2c4fc9;
+  }
+
+  .print-day-date {
+    display: block;
+    color: #555555;
+    font-size: 8pt;
+    font-weight: 400;
+  }
+
+  .print-plan .print-col-label {
+    width: 24mm;
+  }
+
+  .print-check .print-col-label {
+    width: 48mm;
+  }
+
+  /* 과목: 과목 색 왼쪽 띠와 옅은 바탕 (색은 --c) */
+  .print-subject,
+  .print-band th {
+    font-weight: 700;
+    text-align: left;
+    background: color-mix(in srgb, var(--c) 12%, #ffffff);
+    border-left: 1.2mm solid var(--c);
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* 계획표: 칸 안에 그날 학습 내용. 손으로 적을 여백이 있도록 칸을 조금 높게 */
+  .print-plan td {
+    height: 16mm;
+  }
+
+  /* 요일별: 왼쪽 요일, 위 과목(과목 색 위쪽 띠). 요일 7줄이 A4 세로 한 장에 들어가는 높이 */
+  .print-byday .print-col-day {
+    width: 15mm;
+  }
+
+  .print-byday thead th.print-subject-head {
+    background: color-mix(in srgb, var(--c) 12%, #ffffff);
+    border-top: 1.2mm solid var(--c);
+  }
+
+  .print-byday tbody th {
+    font-size: 10.5pt;
+    text-align: center;
+    vertical-align: middle;
+  }
+
+  .print-byday tbody th.wd-0 {
+    color: #c0262d;
+  }
+
+  .print-byday tbody th.wd-6 {
+    color: #2c4fc9;
+  }
+
+  .print-byday td {
+    height: 29mm;
+  }
+
+  .print-item {
+    display: flex;
+    gap: 1.2mm;
+    align-items: flex-start;
+    line-height: 1.3;
+  }
+
+  .print-item + .print-item {
+    margin-top: 1mm;
+  }
+
+  .print-box {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 3.8mm;
+    height: 3.8mm;
+    margin-top: 0.4mm;
+    color: #ffffff;
+    background: #ffffff;
+    border: 0.3mm solid #333333;
+    border-radius: 0.8mm;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .print-box.is-done {
+    background: var(--c);
+    border-color: var(--c);
+  }
+
+  .print-box svg {
+    width: 3mm;
+    height: 3mm;
+  }
+
+  /* 체크표: 학습 내용 줄마다 네모 7개. 계획 없는 요일은 작은 점 */
+  .print-check .print-task {
+    font-weight: 400;
+    text-align: left;
+    vertical-align: middle;
+  }
+
+  .print-check td {
+    height: 8mm;
+    text-align: center;
+    vertical-align: middle;
+  }
+
+  .print-check .print-box {
+    width: 4.5mm;
+    height: 4.5mm;
+    margin: 0;
+  }
+
+  .print-dot {
+    display: inline-block;
+    width: 1.2mm;
+    height: 1.2mm;
+    background: #bbbbbb;
+    border-radius: 50%;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .print-empty {
+    margin-top: 4mm;
+    color: #444444;
+  }
 }
