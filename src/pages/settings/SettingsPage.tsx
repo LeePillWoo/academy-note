@@ -39,7 +39,7 @@ export default function SettingsPage() {
           </li>
         ))}
       </ul>
-      <p className="muted hint">앱 버전 1.0.0 · 기록은 이 폰에 저장됩니다. 폰을 바꾸기 전에 백업을 내보내 두세요.</p>
+      <p className="muted hint">앱 버전 1.1.0 · 기록은 이 폰에 저장됩니다. 폰을 바꾸기 전에 백업을 내보내 두세요.</p>
     </section>
   )
 }

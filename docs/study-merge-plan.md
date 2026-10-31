@@ -1,7 +1,7 @@
 # 학습체크 합치기 계획서
 
 - 작성일: 2026-10-31
-- 상태: **계획 (사용자 확인 전, 구현 시작 안 함)**
+- 상태: **완료 (2026-10-31, v1.1.0)**. 사용자 답과 실제로 정한 것은 [decisions.md](decisions.md) 72~80번
 - 대상: 학습체크(`10_Apps/study-check`, 커밋 `b566a60` 기준)를 학원노트(`10_Apps/academy-note`, v1.0.0)에 넣어 앱 하나로 만듭니다.
 - 결과 버전: 학원노트 **v1.1.0** (versionCode 2), 디버그 APK, GitHub 릴리스
 
@@ -137,6 +137,8 @@ interface StudyWeek extends BaseRecord { childId: string; weekStart: DateStr; do
 | 6 | 마무리: v1.1.0, APK, 릴리스, 문서(README, decisions, 보안 점검 표) | `npm test`, `npm run test:e2e`, `npm run apk` |
 
 ## 7. 사용자에게 물어볼 것
+
+> **답 (2026-10-31)**: ① 설정은 위로 ② 앱 이름 그대로 ③ 기존 기록은 옮기지 않음(초기화) → 5장의 가져오기는 만들지 않음 ④ 저장소는 학원노트 하나로 (학습체크는 보관) ⑤ 학습체크 작업 멈춤
 
 1. **메뉴**: 설정을 위쪽 톱니로 옮기고 하단 6개(홈·달력·시간표·학습·납부·보강)로 할까요, 아니면 하단 7개?
 2. **앱 이름**: "학원노트" 그대로 둘까요? (바꾸더라도 설치 ID `com.leepillwoo.academynote`는 그대로라 업데이트에는 문제없음)
