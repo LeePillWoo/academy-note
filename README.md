@@ -5,6 +5,7 @@
 
 - 계획서: [docs/plan.md](docs/plan.md)
 - 개발 중 정한 것들: [docs/decisions.md](docs/decisions.md)
+- 학습체크 합치기 계획(확인 전): [docs/study-merge-plan.md](docs/study-merge-plan.md)
 - 자녀 2명을 따로 관리하고, 수강료 방식, 보강 규칙, 알림은 학원별로 앱 안에서 설정합니다.
 - 휴대폰(삼성 인터넷 포함)과 PC 모두, 가로·세로 화면에 대응합니다.
 - 개발 방식: 웹 앱으로 먼저 만들고, 3단계에서 Capacitor로 APK로 감쌉니다.
