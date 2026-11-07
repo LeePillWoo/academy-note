@@ -1595,6 +1595,13 @@ details > summary.summary {
   background: #fee2e2;
 }
 
+/* 자동납부 항목 (기록 없이 낸 것으로 본 것과 예정): 남색 톤으로 '자동'임을 보여줍니다 */
+.badge.is-auto {
+  color: #4338ca;
+  background: #e0e7ff;
+  border-color: transparent;
+}
+
 /* 합계 / 낸 금액 / 남은 금액 */
 .stats {
   display: grid;
