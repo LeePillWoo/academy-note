@@ -55,7 +55,7 @@
 - 개선 과제: **앱 잠금(PIN·지문)**, **백업 파일 암호화(비밀번호)**. 요청이 있으면 넣습니다.
 
 ### 8. 의존성
-- `npm audit`: `@grpc/grpc-js` high 4건. Firestore가 **서버(Node.js) 환경에서만** 쓰는 통신 라이브러리입니다. 브라우저·APK 번들에는 들어가지 않음을 확인했습니다(빌드 결과에서 `grpc-js`, `@grpc`, `ChannelCredentials` 식별자 0건, `grpcFlowControlWindow`라는 설정 이름만 있음). 따라서 앱에는 영향이 없지만 Firebase 업데이트 때 함께 올라가는지 지켜봅니다.
+- `npm audit`(2026-11-07 재확인): high 4건(@grpc/grpc-js 계열) + moderate 3건(glob 계열), 모두 Firestore가 **서버(Node.js) 환경에서만** 쓰는 경로입니다. Firestore가 **서버(Node.js) 환경에서만** 쓰는 통신 라이브러리입니다. 브라우저·APK 번들에는 들어가지 않음을 확인했습니다(빌드 결과에서 `grpc-js`, `@grpc`, `ChannelCredentials` 식별자 0건, `grpcFlowControlWindow`라는 설정 이름만 있음). 따라서 앱에는 영향이 없지만 Firebase 업데이트 때 함께 올라가는지 지켜봅니다.
 - npm이 차단한 설치 스크립트 2개(`@firebase/util`, `protobufjs`의 postinstall)는 허용하지 않은 채로 빌드와 테스트가 모두 정상입니다.
 
 ### 8-1. 학습 기록 (v1.1.0에서 합침)

@@ -10,6 +10,9 @@ export default defineConfig({
   fullyParallel: true,
   // 개발 서버가 처음 화면을 준비하는 시간까지 넉넉히
   timeout: 60_000,
+  // 헤드리스 Edge가 여러 테스트를 같이 돌릴 때 드물게 그리기를 멈춰(절전) 클릭이 60초를 넘기는 일이 있어
+  // 한 번 다시 시도합니다. 진짜 문제는 두 번 연속 실패하므로 그대로 드러납니다.
+  retries: 1,
   reporter: 'list',
   use: {
     baseURL: `http://localhost:${PORT}`,

@@ -34,6 +34,8 @@ export default function PaymentsPage() {
   )
   const progress = useMemo(
     () => academies.flatMap((academy) => {
+      // 그만둔 학원은 더 셀 회차가 없으므로 현황에서 뺍니다.
+      if (academy.endedOn && academy.endedOn < context.todayStr) return []
       const value = sessionProgress(academy, context, payments)
       return value ? [{ academy, ...value }] : []
     }),
