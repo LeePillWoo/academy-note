@@ -285,7 +285,7 @@ test('메뉴(설정 위치), 홈의 오늘 학습, 전체 보기 카드, 빠르�
   await expect(today).toContainText('단어')
 })
 
-test('체크표 인쇄: 학습 내용을 안 적은 과목도 요일 칸이 나뉘고 점이 찍힘', async ({ page }, testInfo) => {
+test('체크표 인쇄: 학습 내용을 안 적은 과목도 요일 칸이 나뉘고 체크 칸이 찍힘', async ({ page }, testInfo) => {
   const viewPicker = page.getByRole('radiogroup', { name: '보기 방식' })
 
   await addChildren(page, ['첫째'])
@@ -303,10 +303,72 @@ test('체크표 인쇄: 학습 내용을 안 적은 과목도 요일 칸이 나�
   const taskRow = sheet.locator('.print-check tr', { has: page.locator('.print-task') })
   await expect(taskRow.locator('.print-box')).toHaveCount(5)
   await expect(taskRow.locator('.print-dot')).toHaveCount(2)
-  // 학습 내용이 없는 과목 줄: 칸이 이어 붙지 않고 요일 7칸으로 나뉘며 칸마다 점 하나
+  // 학습 내용이 없는 과목 줄: 요일 7칸으로 나뉘고, 과목에서 고른 요일(기본 평일)에 네모가 찍힘
   const emptyRow = sheet.locator('.print-band', { hasText: '미술' })
   await expect(emptyRow.locator('td')).toHaveCount(7)
-  await expect(emptyRow.locator('.print-dot')).toHaveCount(7)
+  await expect(emptyRow.locator('.print-box')).toHaveCount(5)
+  await expect(emptyRow.locator('.print-dot')).toHaveCount(2)
   await page.screenshot({ path: testInfo.outputPath('check-print-empty-subject.png') })
   await page.emulateMedia({ media: 'screen' })
+})
+
+test('학습 내용 없이 과목만 요일 체크, 학습 내용이 생기면 과목 요일은 꺼짐', async ({ page }, testInfo) => {
+  const viewPicker = page.getByRole('radiogroup', { name: '보기 방식' })
+  const summaryDone = page.locator('.week-summary strong')
+
+  await addChildren(page, ['첫째'])
+  // 학습 내용 없이 과목만: 기본 평일에서 토·일을 켜 매일로
+  await addSubject(page, { name: '독서', subjectDays: ['토', '일'], tasks: [] })
+  await page.goto('/#/study')
+
+  // 요일별(기본): 과목 칸 안에 과목 이름이 칩으로 나오고 눌러서 체크
+  await expect(page.locator('.dayplan-table')).toBeVisible()
+  await expect(page.locator('.plan-item')).toHaveCount(7)
+  await page.getByRole('button', { name: /^독서 .* 오늘 미완료$/ }).click()
+  await expect(page.getByRole('button', { name: /^독서 .* 오늘 완료$/ })).toHaveAttribute('aria-pressed', 'true')
+  await expect(summaryDone).toHaveText('1')
+  await expectNoHorizontalOverflow(page)
+  await page.screenshot({ path: testInfo.outputPath('1-subject-only-days.png'), fullPage: true })
+
+  // 체크표: 과목 줄에 바로 체크 칸 7개 ("학습 내용이 없습니다" 안내 대신)
+  await viewPicker.getByRole('radio', { name: '체크표' }).click()
+  const subjectRow = page.locator('.subject-row.is-checkable')
+  await expect(subjectRow).toHaveCount(1)
+  await expect(subjectRow.locator('.check-cell')).toHaveCount(7)
+  await expect(subjectRow.locator('.check-cell.is-planned')).toHaveCount(7)
+  await expect(page.getByText('학습 내용이 없습니다')).toHaveCount(0)
+  await page.screenshot({ path: testInfo.outputPath('2-subject-only-check.png') })
+
+  // 새로고침해도 체크가 남아 있음
+  await page.reload()
+  await expect(page.getByRole('button', { name: /^독서 .* 오늘 완료$/ })).toBeVisible()
+
+  // 홈의 '오늘 학습'에도 과목이 그대로 나옴
+  await page.goto('/')
+  const today = page.locator('.study-today')
+  await expect(today.locator('.plan-item')).toHaveCount(1)
+  await expect(today).toContainText('독서')
+
+  // 과목 목록: 학습 내용이 없으면 과목 요일을 보여줌
+  await page.goto('/#/study/subjects')
+  await expect(page.locator('.list-sub')).toContainText('과목만 체크 · 월·화·수·목·금·토·일')
+
+  // 학습 내용을 넣으면 과목 요일 단추가 꺼지고, 보드는 학습 내용 기준으로 바뀜
+  await page.getByRole('link', { name: /^독서/ }).click()
+  await expect(page.getByRole('heading', { name: '과목 수정' })).toBeVisible()
+  const subjectDays = page.getByRole('group', { name: '과목 요일' })
+  await expect(subjectDays.getByRole('button', { name: '월', exact: true })).toBeEnabled()
+  // 학습 내용이 없는 과목은 빈 줄도 없으므로 먼저 한 줄 추가합니다.
+  await page.getByRole('button', { name: '학습 내용 추가' }).click()
+  await page.getByLabel('학습 내용 1 이름').fill('하루 20분')
+  await expect(subjectDays.getByRole('button', { name: '월', exact: true })).toBeDisabled()
+  await expect(page.getByText('학습 내용이 있어서 과목 요일은 쓰지 않습니다.')).toBeVisible()
+  await page.screenshot({ path: testInfo.outputPath('3-subject-form.png'), fullPage: true })
+  await page.getByRole('button', { name: '저장' }).click()
+
+  // 보드: 과목 줄 체크는 사라지고 학습 내용 줄로 (평일 5칸)
+  await page.goto('/#/study')
+  await expect(page.locator('.subject-row.is-checkable')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: /^하루 20분 .*/ }).first()).toBeVisible()
+  await expect(summaryDone).toHaveText('0')
 })

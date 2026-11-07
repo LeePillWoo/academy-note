@@ -2,7 +2,8 @@ import type { CellState } from '../../data/study/weekStats'
 import { formatDate, type DateStr } from '../../utils/date'
 
 interface CheckCellProps {
-  taskName: string
+  /** 학습 내용 이름, 또는 학습 내용이 없는 과목 이름 */
+  itemName: string
   date: DateStr
   state: CellState
   isToday: boolean
@@ -15,12 +16,12 @@ interface CheckCellProps {
  * - 계획하지 않은 요일: 옅은 점만 보이지만 눌러서 체크할 수 있습니다.
  * - 계획했는데 지난 날: 옅은 분홍 (놓친 날)
  */
-export default function CheckCell({ taskName, date, state, isToday, onToggle }: CheckCellProps) {
+export default function CheckCell({ itemName, date, state, isToday, onToggle }: CheckCellProps) {
   const className = ['check-cell', state.planned && 'is-planned', state.done && 'is-done', state.missed && 'is-missed']
     .filter(Boolean)
     .join(' ')
   const status = state.done ? '완료' : state.planned ? '미완료' : '계획 없음'
-  const label = `${taskName} ${formatDate(date)}${isToday ? ' 오늘' : ''} ${status}`
+  const label = `${itemName} ${formatDate(date)}${isToday ? ' 오늘' : ''} ${status}`
 
   return (
     <button type="button" className={className} aria-pressed={state.done} aria-label={label} onClick={onToggle}>

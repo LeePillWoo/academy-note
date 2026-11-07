@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { softColorVars } from '../../data/colors'
+import { itemsOfSubject } from '../../data/study/items'
 import { cellState, dayItems, progressOf } from '../../data/study/weekStats'
 import { DayFootRow, DayHeadRow, SubjectLink } from './BoardRows'
 import type { BoardTableProps } from './boardTypes'
@@ -46,27 +47,27 @@ export default function PlanTable({ subjects, tasksOf, dates, todayStr, isDone, 
           </thead>
           <tbody>
             {subjects.map((subject) => {
-              const tasks = tasksOf(subject.id)
-              const progress = progressOf(tasks, dates, isDone)
+              const items = itemsOfSubject(subject, tasksOf(subject.id))
+              const progress = progressOf(items, dates, isDone)
               return (
                 <tr key={subject.id} className="plan-row" style={softColorVars(subject.color) as CSSProperties}>
                   <th scope="row" className="plan-subject">
                     <SubjectLink subject={subject} />
                     <span className="plan-subject-sub">
-                      {tasks.length === 0 ? '학습 내용 없음' : `${progress.done}/${progress.planned}`}
+                      {`${progress.done}/${progress.planned}`}
                     </span>
                   </th>
                   {dates.map((date) => {
                     const isToday = date === todayStr
-                    const items = dayItems(tasks, date, isDone)
+                    const shown = dayItems(items, date, isDone)
                     return (
                       <td key={date} className={isToday ? 'plan-cell is-today' : 'plan-cell'}>
-                        {items.length > 0 && (
+                        {shown.length > 0 && (
                           <div className="plan-items">
-                            {items.map((task) => (
-                              <PlanItem key={task.id} task={task} date={date} isToday={isToday}
-                                state={cellState(task, date, isDone(task.id, date), todayStr)}
-                                onToggle={() => onToggle(task.id, date)} />
+                            {shown.map((item) => (
+                              <PlanItem key={item.id} item={item} date={date} isToday={isToday}
+                                state={cellState(item, date, isDone(item.id, date), todayStr)}
+                                onToggle={() => onToggle(item.id, date)} />
                             ))}
                           </div>
                         )}

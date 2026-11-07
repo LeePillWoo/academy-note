@@ -776,6 +776,17 @@ fieldset.field > * + * {
   border-color: var(--color-primary);
 }
 
+/* 끈 요일 단추 (학습 내용이 있어서 과목 요일을 쓰지 않을 때) */
+.weekday-toggle:disabled {
+  color: var(--color-muted);
+  cursor: default;
+  opacity: 0.55;
+}
+
+.weekday-toggle:disabled[aria-pressed='true'] {
+  color: var(--color-on-primary);
+}
+
 /* ===== 선택 단추 묶음 ===== */
 .segmented {
   display: flex;
@@ -2692,6 +2703,27 @@ code {
   align-items: center;
   gap: 0.5rem;
   min-height: 2.5rem;
+}
+
+/* 학습 내용이 없는 과목: 과목 줄에 바로 체크 칸이 붙습니다 */
+.subject-row.is-checkable td {
+  height: 2.75rem;
+  border-top: 1px solid var(--color-border);
+}
+
+/* 이름 칸이 좁으므로 색 점을 빼서 글자 자리를 넓힙니다. (과목 색은 왼쪽 띠로 보임) */
+.subject-row.is-checkable th {
+  padding-right: 0.25rem;
+}
+
+.subject-row.is-checkable .subject-link {
+  gap: 0.125rem;
+  margin-left: -0.25rem;
+  padding-right: 0;
+}
+
+.subject-row.is-checkable .subject-link .dot {
+  display: none;
 }
 
 /* 과목 이름 (누르면 과목 설정 화면) */

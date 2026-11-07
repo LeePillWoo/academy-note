@@ -4,6 +4,7 @@ import { useChecks } from '../../data/study/checks'
 import { useSubjects } from '../../data/study/subjects'
 import { useTasks } from '../../data/study/tasks'
 import type { Child } from '../../data/types'
+import { itemsOfSubjects } from '../../data/study/items'
 import { percent, progressOf } from '../../data/study/weekStats'
 import { addDays, today, type DateStr } from '../../utils/date'
 import { formatWeekRange, startOfWeek, weekDates } from '../../utils/week'
@@ -34,14 +35,15 @@ export default function WeekBoard({ child, weekStart, onChangeWeek, view }: Week
   const todayStr = today()
   const currentWeek = startOfWeek(todayStr)
   const dates = useMemo(() => weekDates(weekStart), [weekStart])
-  const allTasks = useMemo(() => subjects.flatMap((subject) => tasksOf(subject.id)), [subjects, tasksOf])
-  const total = progressOf(allTasks, dates, isDone)
-  const dayTotals = allTasks.length > 0 ? dates.map((date) => progressOf(allTasks, [date], isDone)) : null
+  // 체크할 줄 전부 (학습 내용, 학습 내용이 없는 과목은 과목 자체)
+  const allItems = useMemo(() => itemsOfSubjects(subjects, tasksOf), [subjects, tasksOf])
+  const total = progressOf(allItems, dates, isDone)
+  const dayTotals = allItems.length > 0 ? dates.map((date) => progressOf(allItems, [date], isDone)) : null
 
-  async function toggle(taskId: string, date: DateStr) {
+  async function toggle(itemId: string, date: DateStr) {
     try {
       setError('')
-      await toggleCheck(taskId, date)
+      await toggleCheck(itemId, date)
     } catch {
       setError('저장하지 못했습니다. 다시 시도하세요.')
     }
@@ -70,7 +72,7 @@ export default function WeekBoard({ child, weekStart, onChangeWeek, view }: Week
         )}
       </div>
 
-      {allTasks.length > 0 && (
+      {allItems.length > 0 && (
         <div className="week-summary" aria-label="이번 주 진행">
           <p className="week-summary-text">
             <strong>{total.done}</strong>

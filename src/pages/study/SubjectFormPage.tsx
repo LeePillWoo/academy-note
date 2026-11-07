@@ -48,6 +48,8 @@ function SubjectForm({ subjectId }: { subjectId?: string }) {
   const { subjects, saveSubject, removeSubject } = useSubjects(child?.id ?? null)
   const [name, setName] = useState(original?.name ?? '')
   const [color, setColor] = useState(() => original?.color ?? nextUnusedColor(subjects.map((subject) => subject.color)))
+  // 과목 자체의 계획 요일. 학습 내용이 하나도 없을 때만 씁니다.
+  const [weekdays, setWeekdays] = useState<Weekday[]>(() => original?.weekdays ?? WEEKDAYS)
   const [tasks, setTasks] = useState<TaskItem[]>(() =>
     original
       ? data.studyTasks
@@ -94,6 +96,9 @@ function SubjectForm({ subjectId }: { subjectId?: string }) {
     )
   }
 
+  // 이름을 적은 학습 내용이 하나라도 있으면 과목 요일은 쓰지 않습니다.
+  const hasTasks = tasks.some((item) => item.name.trim() !== '')
+
   function updateTask(key: string, patch: Partial<TaskItem>) {
     setTasks((items) => items.map((item) => (item.key === key ? { ...item, ...patch } : item)))
   }
@@ -133,6 +138,7 @@ function SubjectForm({ subjectId }: { subjectId?: string }) {
         childId: child!.id,
         name: trimmed,
         color,
+        weekdays,
         // 이름이 빈 줄은 저장하지 않습니다.
         tasks: tasks
           .map((item) => ({ id: item.id, name: item.name.trim(), weekdays: item.weekdays }))
@@ -188,6 +194,16 @@ function SubjectForm({ subjectId }: { subjectId?: string }) {
             <legend className="field-label">표시 색상</legend>
             <ColorPicker name="subject-color" value={color} onChange={setColor} />
             <p className="muted">보드에서 이 과목의 줄과 체크 표시에 쓰는 색입니다.</p>
+          </fieldset>
+
+          <fieldset className="field">
+            <legend className="field-label">과목 요일</legend>
+            <WeekdayPicker label="과목" value={weekdays} onChange={setWeekdays} disabled={hasTasks} />
+            <p className="muted">
+              {hasTasks
+                ? '학습 내용이 있어서 과목 요일은 쓰지 않습니다. 아래 학습 내용마다 고른 요일로 체크합니다.'
+                : '학습 내용 없이 과목만 체크할 때 쓰는 요일입니다. 아래에 학습 내용을 넣으면 그쪽 요일을 씁니다.'}
+            </p>
           </fieldset>
         </div>
 

@@ -10,10 +10,15 @@ export function tasksRemovalChanges(data: Database, taskIds: string[], now = now
   ]
 }
 
-/** 과목을 지울 때 함께 지울 것들: 과목의 학습 내용과 그 체크 */
+/** 과목을 지울 때 함께 지울 것들: 과목의 학습 내용과 그 체크, 과목 자체의 체크 */
 export function subjectRemovalChanges(data: Database, subjectId: string, now = nowIso()): Change[] {
   const taskIds = data.studyTasks.filter((task) => task.subjectId === subjectId).map((task) => task.id)
-  return [...tasksRemovalChanges(data, taskIds, now), { type: 'remove', collection: 'subjects', id: subjectId }]
+  return [
+    // 과목 자체 체크(학습 내용이 없을 때 쓴 것)까지 한 번에 지웁니다.
+    ...checksRemovalChanges(data, [...taskIds, subjectId], now),
+    ...taskIds.map((id): Change => ({ type: 'remove', collection: 'studyTasks', id })),
+    { type: 'remove', collection: 'subjects', id: subjectId },
+  ]
 }
 
 /** 자녀를 지울 때 함께 지울 학습 기록: 과목, 학습 내용, 주 묶음 (자녀 자체는 빼고) */

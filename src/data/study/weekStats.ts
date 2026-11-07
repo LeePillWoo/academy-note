@@ -1,5 +1,5 @@
 import { weekdayOf, type DateStr } from '../../utils/date'
-import type { StudyTask } from '../types'
+import type { StudyItem } from './items'
 
 /** 보드 칸 하나의 상태 */
 export interface CellState {
@@ -11,8 +11,8 @@ export interface CellState {
   missed: boolean
 }
 
-export function cellState(task: StudyTask, date: DateStr, done: boolean, todayStr: DateStr): CellState {
-  const planned = task.weekdays.includes(weekdayOf(date))
+export function cellState(item: StudyItem, date: DateStr, done: boolean, todayStr: DateStr): CellState {
+  const planned = item.weekdays.includes(weekdayOf(date))
   return { planned, done, missed: planned && !done && date < todayStr }
 }
 
@@ -23,23 +23,23 @@ export interface Progress {
   planned: number
 }
 
-/** 학습 내용들의 날짜 범위 안 완료·계획 칸 수 */
-export function progressOf(tasks: StudyTask[], dates: DateStr[], isDone: (taskId: string, date: DateStr) => boolean): Progress {
+/** 체크할 줄들의 날짜 범위 안 완료·계획 칸 수 */
+export function progressOf(items: StudyItem[], dates: DateStr[], isDone: (itemId: string, date: DateStr) => boolean): Progress {
   let done = 0
   let planned = 0
-  for (const task of tasks) {
+  for (const item of items) {
     for (const date of dates) {
-      if (task.weekdays.includes(weekdayOf(date))) planned += 1
-      if (isDone(task.id, date)) done += 1
+      if (item.weekdays.includes(weekdayOf(date))) planned += 1
+      if (isDone(item.id, date)) done += 1
     }
   }
   return { done, planned }
 }
 
-/** 계획표 칸에 보일 학습 내용: 그날 계획한 것과, 계획에 없어도 그날 체크한 것 (순서는 그대로) */
-export function dayItems(tasks: StudyTask[], date: DateStr, isDone: (taskId: string, date: DateStr) => boolean): StudyTask[] {
+/** 계획표 칸에 보일 줄: 그날 계획한 것과, 계획에 없어도 그날 체크한 것 (순서는 그대로) */
+export function dayItems(items: StudyItem[], date: DateStr, isDone: (itemId: string, date: DateStr) => boolean): StudyItem[] {
   const weekday = weekdayOf(date)
-  return tasks.filter((task) => task.weekdays.includes(weekday) || isDone(task.id, date))
+  return items.filter((item) => item.weekdays.includes(weekday) || isDone(item.id, date))
 }
 
 /** 완료 비율(0~100). 계획보다 많이 했어도 100을 넘지 않습니다. */

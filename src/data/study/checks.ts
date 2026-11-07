@@ -5,9 +5,9 @@ import { useData } from '../DataProvider'
 import { nowIso } from '../id'
 import type { Change, Database, StudyWeek } from '../types'
 
-/** 체크 한 칸의 이름. 주 묶음의 done 목록에 들어갑니다. */
-export function checkKey(taskId: string, date: DateStr): string {
-  return `${taskId}:${date}`
+/** 체크 한 칸의 이름. 주 묶음의 done 목록에 들어갑니다. (itemId = 학습 내용, 또는 학습 내용이 없는 과목) */
+export function checkKey(itemId: string, date: DateStr): string {
+  return `${itemId}:${date}`
 }
 
 /** 한 자녀의 한 주 묶음 id */
@@ -15,10 +15,14 @@ export function studyWeekId(childId: string, weekStart: DateStr): string {
   return `${childId}:${weekStart}`
 }
 
-/** 학습 내용이 어느 자녀 것인지 (과목을 거쳐 찾음) */
-export function childIdOfTask(data: Database, taskId: string): string | undefined {
-  const task = data.studyTasks.find((item) => item.id === taskId)
-  return task && data.subjects.find((subject) => subject.id === task.subjectId)?.childId
+/**
+ * 체크할 줄이 어느 자녀 것인지. id는 학습 내용이거나(과목을 거쳐 찾음),
+ * 학습 내용이 없는 과목 자체입니다.
+ */
+export function childIdOfItem(data: Database, itemId: string): string | undefined {
+  const task = data.studyTasks.find((item) => item.id === itemId)
+  if (task) return data.subjects.find((subject) => subject.id === task.subjectId)?.childId
+  return data.subjects.find((subject) => subject.id === itemId)?.childId
 }
 
 /** 주 묶음의 done 목록을 바꾸는 변경. 비면 묶음을 지웁니다. */
@@ -29,12 +33,12 @@ function weekChange(week: StudyWeek, done: string[], now: string): Change {
 }
 
 /** 칸 하나를 체크하거나 취소하는 변경. 그 주 묶음만 고쳐 씁니다. */
-export function checkToggleChanges(data: Database, taskId: string, date: DateStr, now = nowIso()): Change[] {
-  const childId = childIdOfTask(data, taskId)
+export function checkToggleChanges(data: Database, itemId: string, date: DateStr, now = nowIso()): Change[] {
+  const childId = childIdOfItem(data, itemId)
   if (!childId) return []
   const weekStart = startOfWeek(date)
   const id = studyWeekId(childId, weekStart)
-  const key = checkKey(taskId, date)
+  const key = checkKey(itemId, date)
   const week = data.studyWeeks.find((item) => item.id === id)
   if (!week) {
     return [{ type: 'put', collection: 'studyWeeks', item: { id, childId, weekStart, done: [key], createdAt: now, updatedAt: now } }]
@@ -43,10 +47,13 @@ export function checkToggleChanges(data: Database, taskId: string, date: DateStr
   return [weekChange(week, done, now)]
 }
 
-/** 학습 내용들을 지울 때 주 묶음에서 그 체크들을 빼는 변경 (여러 내용을 한 번에 처리해야 같은 주 묶음을 두 번 덮어쓰지 않음) */
-export function checksRemovalChanges(data: Database, taskIds: string[], now = nowIso()): Change[] {
-  if (taskIds.length === 0) return []
-  const prefixes = taskIds.map((id) => `${id}:`)
+/**
+ * 체크를 지우는 변경. 여러 줄(학습 내용·과목)을 **한 번에** 넘겨야 합니다.
+ * 나눠서 부르면 같은 주 묶음을 두 번 덮어써 한쪽이 사라집니다.
+ */
+export function checksRemovalChanges(data: Database, itemIds: string[], now = nowIso()): Change[] {
+  if (itemIds.length === 0) return []
+  const prefixes = itemIds.map((id) => `${id}:`)
   const changes: Change[] = []
   for (const week of data.studyWeeks) {
     const done = week.done.filter((key) => !prefixes.some((prefix) => key.startsWith(prefix)))
@@ -60,13 +67,13 @@ export function useChecks() {
   const { data, update } = useData()
   const doneKeys = useMemo(() => new Set(data.studyWeeks.flatMap((week) => week.done)), [data.studyWeeks])
 
-  function isDone(taskId: string, date: DateStr): boolean {
-    return doneKeys.has(checkKey(taskId, date))
+  function isDone(itemId: string, date: DateStr): boolean {
+    return doneKeys.has(checkKey(itemId, date))
   }
 
   /** 바로 앞 저장이 끝난 최신 데이터 기준으로 바꿉니다. (빠르게 연달아 눌러도 앞의 체크가 사라지지 않게) */
-  function toggleCheck(taskId: string, date: DateStr): Promise<void> {
-    return update((latest) => checkToggleChanges(latest, taskId, date))
+  function toggleCheck(itemId: string, date: DateStr): Promise<void> {
+    return update((latest) => checkToggleChanges(latest, itemId, date))
   }
 
   return { isDone, toggleCheck }

@@ -3,7 +3,8 @@ import type { Weekday } from '../../utils/date'
 import { useData } from '../DataProvider'
 import { newId, nowIso } from '../id'
 import type { Change, StudyTask, Subject } from '../types'
-import { subjectRemovalChanges, tasksRemovalChanges } from './cascade'
+import { subjectRemovalChanges } from './cascade'
+import { checksRemovalChanges } from './checks'
 
 /** 과목 화면에서 편집 중인 학습 내용 한 줄. id가 없으면 새로 넣는 것입니다. */
 export interface TaskDraft {
@@ -17,6 +18,8 @@ export interface SubjectInput {
   childId: string
   name: string
   color: string
+  /** 과목 자체의 계획 요일. 학습 내용이 하나도 없을 때만 씁니다. */
+  weekdays: Weekday[]
   /** 저장할 학습 내용 전부 (순서대로). 여기에 없는 기존 내용은 지웁니다. */
   tasks: TaskDraft[]
 }
@@ -36,12 +39,13 @@ export function useSubjects(childId: string | null) {
     const now = nowIso()
     const existing = input.id ? data.subjects.find((subject) => subject.id === input.id) : undefined
     const subject: Subject = existing
-      ? { ...existing, name: input.name, color: input.color, updatedAt: now }
+      ? { ...existing, name: input.name, color: input.color, weekdays: input.weekdays, updatedAt: now }
       : {
           id: newId(),
           childId: input.childId,
           name: input.name,
           color: input.color,
+          weekdays: input.weekdays,
           order: subjects.reduce((max, item) => Math.max(max, item.order), -1) + 1,
           createdAt: now,
           updatedAt: now,
@@ -66,7 +70,13 @@ export function useSubjects(childId: string | null) {
     })
     const keptIds = new Set(input.tasks.map((draft) => draft.id))
     const removedIds = existingTasks.filter((task) => !keptIds.has(task.id)).map((task) => task.id)
-    changes.push(...tasksRemovalChanges(data, removedIds, now))
+    // 학습 내용이 생기면 과목 자체 체크는 더 이상 쓰지 않으므로 함께 지웁니다.
+    // (같은 주 묶음을 두 번 덮어쓰지 않도록 지울 것을 한 번에 넘깁니다)
+    const goneIds = input.tasks.length > 0 ? [...removedIds, subject.id] : removedIds
+    changes.push(
+      ...checksRemovalChanges(data, goneIds, now),
+      ...removedIds.map((id): Change => ({ type: 'remove', collection: 'studyTasks', id })),
+    )
 
     await apply(changes)
   }

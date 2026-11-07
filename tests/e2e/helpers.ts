@@ -22,6 +22,8 @@ interface SubjectOptions {
   color?: string
   /** 학습 내용. days는 기본(평일)에서 켜고 끌 요일 */
   tasks: { name: string; days?: string[] }[]
+  /** 과목 자체의 계획 요일. 기본(평일)에서 켜고 끌 요일 (학습 내용이 없을 때 씀) */
+  subjectDays?: string[]
 }
 
 /** 학습 화면에서 볼 자녀(위에서 고른 자녀, 자녀가 한 명이면 그 자녀)에게 과목과 학습 내용을 등록합니다. */
@@ -29,6 +31,7 @@ export async function addSubject(page: Page, options: SubjectOptions) {
   await page.goto('/#/study/subjects/new')
   await page.getByLabel('과목 이름').fill(options.name)
   if (options.color) await page.getByRole('radio', { name: options.color }).check()
+  if (options.subjectDays) await toggleWeekdays(page, '과목', options.subjectDays)
   for (let index = 0; index < options.tasks.length; index++) {
     // 새 과목 화면에는 빈 학습 내용 줄이 하나 있습니다.
     if (index > 0) await page.getByRole('button', { name: '학습 내용 추가' }).click()

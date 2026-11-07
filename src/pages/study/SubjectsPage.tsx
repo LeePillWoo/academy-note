@@ -3,6 +3,7 @@ import { ArrowDownIcon, ArrowUpIcon, ChevronRightIcon, PlusIcon } from '../../co
 import PageHeader from '../../components/PageHeader'
 import { useChildren } from '../../data/children'
 import { useStudyChild } from '../../data/study/studyChild'
+import { subjectWeekdays, weekdayLabel } from '../../data/study/items'
 import { useSubjects } from '../../data/study/subjects'
 import { useTasks } from '../../data/study/tasks'
 import type { Child } from '../../data/types'
@@ -63,7 +64,9 @@ function SubjectList({ child, showName }: { child: Child; showName: boolean }) {
                   <span className="dot" style={{ background: subject.color }} />
                   <span className="list-text">
                     <span className="list-title">{subject.name}</span>
-                    <span className="list-sub">{count === 0 ? '학습 내용 없음' : `학습 내용 ${count}개`}</span>
+                    <span className="list-sub">
+                      {count === 0 ? `과목만 체크 · ${weekdayLabel(subjectWeekdays(subject))}` : `학습 내용 ${count}개`}
+                    </span>
                   </span>
                   <ChevronRightIcon />
                 </Link>

@@ -3,7 +3,8 @@ import { childRemovalChanges } from '../cascade'
 import { applyChanges, emptyDatabase } from '../storage'
 import type { Database, StudyTask, Subject } from '../types'
 import { subjectRemovalChanges, tasksRemovalChanges } from './cascade'
-import { checkToggleChanges, studyWeekId } from './checks'
+import { checkToggleChanges, checksRemovalChanges, studyWeekId } from './checks'
+import { itemsOfSubject, subjectWeekdays } from './items'
 
 const NOW = '2026-10-31T00:00:00.000Z'
 const base = { createdAt: '', updatedAt: '' }
@@ -95,5 +96,45 @@ describe('학습 기록 함께 지우기', () => {
     expect(next.subjects.map((item) => item.id)).toEqual(['s2'])
     expect(next.studyTasks.map((item) => item.id)).toEqual(['t3'])
     expect(next.studyWeeks.map((week) => week.id)).toEqual(['c2:2026-10-26'])
+  })
+})
+
+describe('학습 내용 없는 과목: 과목 자체를 체크', () => {
+  // '독서'는 학습 내용 없이 과목만 토·일에 체크
+  const reading: Subject = { ...base, id: 's3', childId: 'c1', name: '독서', color: '#10b981', order: 1, weekdays: [6, 0] }
+
+  function data(): Database {
+    return { ...setup(), subjects: [subject, other, reading] }
+  }
+
+  it('과목 id로도 체크되고, 그 자녀의 주 묶음에 들어감', () => {
+    const next = applyChanges(data(), checkToggleChanges(data(), 's3', '2026-10-31', NOW)) // 토요일
+    expect(next.studyWeeks).toEqual([
+      { id: studyWeekId('c1', '2026-10-26'), childId: 'c1', weekStart: '2026-10-26', done: ['s3:2026-10-31'], createdAt: NOW, updatedAt: NOW },
+    ])
+  })
+
+  it('체크할 줄: 학습 내용이 있으면 그 목록, 없으면 과목 자체 (요일은 과목 것)', () => {
+    expect(itemsOfSubject(subject, [task('t1'), task('t2')]).map((item) => item.id)).toEqual(['t1', 't2'])
+    expect(itemsOfSubject(reading, [])).toEqual([{ id: 's3', name: '독서', weekdays: [6, 0] }])
+    // 예전 기록처럼 요일이 없으면 평일로 봅니다
+    expect(subjectWeekdays({ ...reading, weekdays: undefined })).toEqual([1, 2, 3, 4, 5])
+  })
+
+  it('과목을 지우면 과목 자체 체크도 함께 지워짐', () => {
+    const checked = applyChanges(data(), checkToggleChanges(data(), 's3', '2026-10-31', NOW))
+    const next = applyChanges(checked, subjectRemovalChanges(checked, 's3', NOW))
+    expect(next.subjects.map((item) => item.id)).toEqual(['s1', 's2'])
+    expect(next.studyWeeks).toEqual([])
+  })
+
+  it('학습 내용이 생기면 과목 자체 체크는 함께 지워져 남지 않음', () => {
+    // 과목만 체크해 두었다가 나중에 학습 내용을 넣는 경우
+    let next = applyChanges(data(), checkToggleChanges(data(), 's3', '2026-10-31', NOW))
+    next = applyChanges(next, checkToggleChanges(next, 't1', '2026-10-26', NOW))
+    expect(next.studyWeeks[0].done.sort()).toEqual(['s3:2026-10-31', 't1:2026-10-26'])
+    // saveSubject가 하는 일: 과목 자체 체크만 지우고 학습 내용 체크는 남김
+    const cleaned = applyChanges(next, checksRemovalChanges(next, ['s3'], NOW))
+    expect(cleaned.studyWeeks[0].done).toEqual(['t1:2026-10-26'])
   })
 })

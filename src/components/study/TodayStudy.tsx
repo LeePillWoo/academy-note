@@ -24,17 +24,17 @@ export default function TodayStudy({ shownChildren, todayStr }: { shownChildren:
   const groups = shownChildren
     .map((child) => {
       const subjects = data.subjects.filter((subject) => subject.childId === child.id).sort(byOrder)
-      const hasTasks = subjects.some((subject) => tasksOf(subject.id).length > 0)
-      return { child, hasTasks, items: studyItemsOn(subjects, tasksOf, todayStr, isDone) }
+      // 과목이 하나라도 있으면 보여줍니다. (학습 내용이 없는 과목은 과목 자체가 체크 대상)
+      return { child, hasTasks: subjects.length > 0, items: studyItemsOn(subjects, tasksOf, todayStr, isDone) }
     })
     .filter((group) => group.hasTasks)
   const total = groups.reduce((sum, group) => sum + group.items.length, 0)
   const done = groups.reduce((sum, group) => sum + group.items.filter((item) => item.done).length, 0)
 
-  async function toggle(taskId: string) {
+  async function toggle(itemId: string) {
     try {
       setError('')
-      await toggleCheck(taskId, todayStr)
+      await toggleCheck(itemId, todayStr)
     } catch {
       setError('저장하지 못했습니다. 다시 시도하세요.')
     }
@@ -66,11 +66,12 @@ export default function TodayStudy({ shownChildren, todayStr }: { shownChildren:
                 <p className="muted">오늘 계획한 학습이 없습니다.</p>
               ) : (
                 <ul className="study-today-list">
-                  {items.map(({ task, subject, done: checked }) => (
-                    <li key={task.id} style={softColorVars(subject.color) as CSSProperties}>
-                      <PlanItem task={task} date={todayStr} isToday
-                        state={cellState(task, todayStr, checked, todayStr)} onToggle={() => toggle(task.id)} />
-                      <span className="study-today-subject">{subject.name}</span>
+                  {items.map(({ item, subject, done: checked }) => (
+                    <li key={item.id} style={softColorVars(subject.color) as CSSProperties}>
+                      <PlanItem item={item} date={todayStr} isToday
+                        state={cellState(item, todayStr, checked, todayStr)} onToggle={() => toggle(item.id)} />
+                      {/* 학습 내용이 없는 과목은 이름이 곧 과목이라 꼬리표를 또 달지 않습니다 */}
+                      {item.id !== subject.id && <span className="study-today-subject">{subject.name}</span>}
                     </li>
                   ))}
                 </ul>

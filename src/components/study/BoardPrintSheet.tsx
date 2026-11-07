@@ -3,7 +3,8 @@ import { createPortal } from 'react-dom'
 import { useChecks } from '../../data/study/checks'
 import { useSubjects } from '../../data/study/subjects'
 import { useTasks } from '../../data/study/tasks'
-import type { Child, Subject, StudyTask } from '../../data/types'
+import type { Child, StudyTask, Subject } from '../../data/types'
+import { isSubjectOnly, itemsOfSubject, type StudyItem } from '../../data/study/items'
 import { dayItems } from '../../data/study/weekStats'
 import { WEEKDAY_NAMES, dateParts, weekdayOf, type DateStr } from '../../utils/date'
 import { formatWeekRange, weekDates } from '../../utils/week'
@@ -19,7 +20,7 @@ interface PrintTableProps {
   subjects: Subject[]
   tasksOf(subjectId: string): StudyTask[]
   dates: DateStr[]
-  isDone(taskId: string, date: DateStr): boolean
+  isDone(itemId: string, date: DateStr): boolean
 }
 
 /**
@@ -27,7 +28,7 @@ interface PrintTableProps {
  * 보고 있는 표를 그대로 인쇄합니다.
  * - 계획표: 과목 줄과 칸 안의 학습 내용 (A4 가로)
  * - 요일별: 요일 줄과 과목 열, 칸 안의 학습 내용 (A4 세로)
- * - 체크표: 학습 내용 줄과 체크 칸 (A4 가로)
+ * - 체크표: 학습 내용 줄과 체크 칸 (A4 가로). 학습 내용이 없는 과목은 과목 줄에 바로 체크 칸
  * 체크한 칸은 채워서 나오므로, 주 초에 뽑으면 손으로 체크할 빈 표가 되고 주 중간에 뽑으면 진행 상황이 나옵니다.
  */
 export default function BoardPrintSheet({ child, weekStart, view }: BoardPrintSheetProps) {
@@ -81,18 +82,25 @@ function DayHeads({ dates, label }: { dates: DateStr[]; label: string }) {
   )
 }
 
-/** 칸 안의 학습 내용 목록: 체크 네모와 이름 */
-function PrintItems({ tasks, date, isDone }: { tasks: StudyTask[]; date: DateStr; isDone: PrintTableProps['isDone'] }) {
+/** 칸 안의 줄 목록: 체크 네모와 이름 (학습 내용, 또는 학습 내용이 없는 과목) */
+function PrintItems({ items, date, isDone }: { items: StudyItem[]; date: DateStr; isDone: PrintTableProps['isDone'] }) {
   return (
     <>
-      {dayItems(tasks, date, isDone).map((task) => (
-        <div key={task.id} className="print-item">
-          <PrintBox done={isDone(task.id, date)} />
-          <span>{task.name}</span>
+      {dayItems(items, date, isDone).map((item) => (
+        <div key={item.id} className="print-item">
+          <PrintBox done={isDone(item.id, date)} />
+          <span>{item.name}</span>
         </div>
       ))}
     </>
   )
+}
+
+/** 요일 칸 하나: 계획했거나 체크했으면 네모, 아니면 작은 점 */
+function PrintCell({ item, date, isDone }: { item: StudyItem; date: DateStr; isDone: PrintTableProps['isDone'] }) {
+  const planned = item.weekdays.includes(weekdayOf(date))
+  const done = isDone(item.id, date)
+  return <td>{planned || done ? <PrintBox done={done} /> : <span className="print-dot" />}</td>
 }
 
 /** 계획표: 왼쪽 과목, 위 요일 */
@@ -110,7 +118,7 @@ function PrintPlan({ subjects, tasksOf, dates, isDone }: PrintTableProps) {
             <th className="print-subject">{subject.name}</th>
             {dates.map((date) => (
               <td key={date}>
-                <PrintItems tasks={tasksOf(subject.id)} date={date} isDone={isDone} />
+                <PrintItems items={itemsOfSubject(subject, tasksOf(subject.id))} date={date} isDone={isDone} />
               </td>
             ))}
           </tr>
@@ -146,7 +154,7 @@ function PrintByDay({ subjects, tasksOf, dates, isDone }: PrintTableProps) {
             </th>
             {subjects.map((subject) => (
               <td key={subject.id} style={{ '--c': subject.color } as CSSProperties}>
-                <PrintItems tasks={tasksOf(subject.id)} date={date} isDone={isDone} />
+                <PrintItems items={itemsOfSubject(subject, tasksOf(subject.id))} date={date} isDone={isDone} />
               </td>
             ))}
           </tr>
@@ -156,7 +164,7 @@ function PrintByDay({ subjects, tasksOf, dates, isDone }: PrintTableProps) {
   )
 }
 
-/** 체크표: 학습 내용 줄마다 네모 7개. 계획 없는 요일은 작은 점 */
+/** 체크표: 줄마다 네모 7개. 계획 없는 요일은 작은 점 */
 function PrintCheck({ subjects, tasksOf, dates, isDone }: PrintTableProps) {
   return (
     <table className="print-table print-check">
@@ -167,27 +175,21 @@ function PrintCheck({ subjects, tasksOf, dates, isDone }: PrintTableProps) {
       <DayHeads dates={dates} label="학습 내용" />
       {subjects.map((subject) => {
         const tasks = tasksOf(subject.id)
-        // 학습 내용이 없는 과목은 과목 띠에도 요일 칸을 나누고, 계획 없는 요일과 같은 규칙으로 점만 찍습니다.
-        const empty = tasks.length === 0
+        // 학습 내용이 없는 과목은 과목 띠를 요일 칸으로 나눠 과목에서 고른 요일에 체크 칸을 둡니다.
+        const subjectOnly = isSubjectOnly(tasks)
+        const subjectItem = itemsOfSubject(subject, tasks)[0]
         return (
           <tbody key={subject.id} style={{ '--c': subject.color } as CSSProperties}>
             <tr className="print-band">
-              <th colSpan={empty ? 1 : 8}>{subject.name}</th>
-              {empty &&
-                dates.map((date) => (
-                  <td key={date}>
-                    <span className="print-dot" />
-                  </td>
-                ))}
+              <th colSpan={subjectOnly ? 1 : 8}>{subject.name}</th>
+              {subjectOnly && dates.map((date) => <PrintCell key={date} item={subjectItem} date={date} isDone={isDone} />)}
             </tr>
             {tasks.map((task) => (
               <tr key={task.id}>
                 <th className="print-task">{task.name}</th>
-                {dates.map((date) => {
-                  const planned = task.weekdays.includes(weekdayOf(date))
-                  const done = isDone(task.id, date)
-                  return <td key={date}>{planned || done ? <PrintBox done={done} /> : <span className="print-dot" />}</td>
-                })}
+                {dates.map((date) => (
+                  <PrintCell key={date} item={task} date={date} isDone={isDone} />
+                ))}
               </tr>
             ))}
           </tbody>

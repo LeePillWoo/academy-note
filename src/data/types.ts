@@ -220,6 +220,13 @@ export interface Subject extends BaseRecord {
   name: string
   color: string
   order: number
+  /**
+   * 과목 자체의 계획 요일. **학습 내용을 하나도 넣지 않았을 때만** 씁니다.
+   * (예: '독서'처럼 세부 내용 없이 과목만 요일별로 체크하는 경우)
+   * 학습 내용이 하나라도 있으면 각 내용의 요일을 쓰고 이 값은 쓰지 않습니다.
+   * 없으면(예전 기록) 평일로 봅니다.
+   */
+  weekdays?: Weekday[]
 }
 
 /** 학습 내용. 과목 아래 한 줄입니다. 예: 문제집 2쪽, 영어 단어 20개 */
