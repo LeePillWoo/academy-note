@@ -3575,6 +3575,13 @@ code {
     margin: 0;
   }
 
+  /* 학습 내용이 없는 과목: 과목 띠도 요일 칸으로 나눠 점만 (칸이 한 줄로 이어 붙지 않게) */
+  .print-check .print-band td {
+    background: color-mix(in srgb, var(--c) 12%, #ffffff);
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
   .print-dot {
     display: inline-block;
     width: 1.2mm;

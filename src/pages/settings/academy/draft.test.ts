@@ -49,12 +49,13 @@ describe('학원 입력 검사', () => {
     expect(validateDraft(draft).errors.schedules).toBe('변경 적용 시작일은 수강 시작일보다 뒤여야 합니다.')
   })
 
-  it('회차 단위: 이미 들은 회차는 첫 기간에만 남고 회차 수보다 작게', () => {
+  it('회차 단위: 이미 들은 회차는 모든 기간에 남고 회차 수보다 작게', () => {
+    // 뒤 기간의 값도 남습니다. 수강료가 바뀌는 날 쓰다 만 묶음을 이어 세는 데 씁니다.
     const draft = validDraft()
     draft.fees[0].value = { ...draft.fees[0].value, type: 'sessions', sessionCount: 8, usedAtStart: 12 }
     draft.fees.push({ id: 'f2', startsOn: '2027-01-01', value: { ...draft.fees[0].value, usedAtStart: 3 } })
     const { input } = validateDraft(draft)
     expect(input?.fees[0].value).toMatchObject({ type: 'sessions', usedAtStart: 7 })
-    expect(input?.fees[1].value).toMatchObject({ type: 'sessions', usedAtStart: 0 })
+    expect(input?.fees[1].value).toMatchObject({ type: 'sessions', usedAtStart: 3 })
   })
 })

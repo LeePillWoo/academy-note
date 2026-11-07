@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useAcademies } from '../data/academies'
 import { useChildren } from '../data/children'
-import { PAYMENT_KIND_LABELS, PAYMENT_STATUS_LABELS, type PaymentView } from '../data/paymentPlan'
+import { PAYMENT_KIND_LABELS, type PaymentView } from '../data/paymentPlan'
+import PaymentStatusBadge from './PaymentStatusBadge'
 import { lastMethod, latestPaidPayment, usePayments } from '../data/payments'
 import { useSelectedChild } from '../data/SelectedChild'
 import { formatDate, today } from '../utils/date'
@@ -25,9 +26,13 @@ export default function PaymentRow({ view, onClick }: { view: PaymentView; onCli
   const what = view.kind === 'tuition' ? view.title : `${PAYMENT_KIND_LABELS[view.kind]}${view.title ? ` · ${view.title}` : ''}`
   const when = view.record?.paidOn
     ? `${formatDate(view.record.paidOn)} 냄${view.record.paidOn < view.dueOn ? ' (선납)' : ''}`
-    : view.assumed
-      ? `${formatDate(view.dueOn)} · 앱 등록 전`
-      : `${formatDate(view.dueOn)}까지`
+    : view.auto && view.status === 'paid'
+      ? `${formatDate(view.dueOn)} 자동납부`
+      : view.assumed
+        ? `${formatDate(view.dueOn)} · 앱 등록 전`
+        : view.auto
+          ? `${formatDate(view.dueOn)} 자동납부 예정`
+          : `${formatDate(view.dueOn)}까지`
   const checked = view.status === 'paid' && !view.assumed
 
   async function quickCheck() {
@@ -64,7 +69,7 @@ export default function PaymentRow({ view, onClick }: { view: PaymentView; onCli
         </span>
         <span className="amount-col">
           <span className="amount">{view.status === 'paid' ? formatWon(view.amount) : formatFee(view.amount)}</span>
-          <span className={`badge payment-${view.status}${view.assumed ? ' is-assumed' : ''}`}>{PAYMENT_STATUS_LABELS[view.status]}</span>
+          <PaymentStatusBadge view={view} />
         </span>
       </button>
       <button

@@ -284,3 +284,29 @@ test('메뉴(설정 위치), 홈의 오늘 학습, 전체 보기 카드, 빠르�
   await expect(today.locator('.plan-item')).toHaveCount(1)
   await expect(today).toContainText('단어')
 })
+
+test('체크표 인쇄: 학습 내용을 안 적은 과목도 요일 칸이 나뉘고 점이 찍힘', async ({ page }, testInfo) => {
+  const viewPicker = page.getByRole('radiogroup', { name: '보기 방식' })
+
+  await addChildren(page, ['첫째'])
+  await addSubject(page, { name: '국어', tasks: [{ name: '받아쓰기' }] })
+  // 과목만 만들고 학습 내용은 비워 둔 과목
+  await addSubject(page, { name: '미술', color: '주황', tasks: [] })
+  await page.goto('/#/study')
+  await viewPicker.getByRole('radio', { name: '체크표' }).click()
+  await expect(page.locator('.check-table')).toBeVisible()
+
+  await page.emulateMedia({ media: 'print' })
+  const sheet = page.locator('.print-sheet')
+  await expect(sheet.locator('h1')).toHaveText('주간 학습 체크표')
+  // 학습 내용이 있는 과목 줄: 평일 5칸은 네모, 계획 없는 토·일 2칸은 점
+  const taskRow = sheet.locator('.print-check tr', { has: page.locator('.print-task') })
+  await expect(taskRow.locator('.print-box')).toHaveCount(5)
+  await expect(taskRow.locator('.print-dot')).toHaveCount(2)
+  // 학습 내용이 없는 과목 줄: 칸이 이어 붙지 않고 요일 7칸으로 나뉘며 칸마다 점 하나
+  const emptyRow = sheet.locator('.print-band', { hasText: '미술' })
+  await expect(emptyRow.locator('td')).toHaveCount(7)
+  await expect(emptyRow.locator('.print-dot')).toHaveCount(7)
+  await page.screenshot({ path: testInfo.outputPath('check-print-empty-subject.png') })
+  await page.emulateMedia({ media: 'screen' })
+})

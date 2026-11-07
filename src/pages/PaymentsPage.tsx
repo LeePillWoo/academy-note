@@ -34,10 +34,10 @@ export default function PaymentsPage() {
   )
   const progress = useMemo(
     () => academies.flatMap((academy) => {
-      const value = sessionProgress(academy, context)
+      const value = sessionProgress(academy, context, payments)
       return value ? [{ academy, ...value }] : []
     }),
-    [academies, context],
+    [academies, context, payments],
   )
 
   // 이번 달을 볼 때는 다음 달 항목도 아래에 두어 미리(선납) 체크할 수 있게 합니다.

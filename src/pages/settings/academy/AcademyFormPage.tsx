@@ -228,6 +228,19 @@ function AcademyForm({ academyId }: { academyId?: string }) {
             )}
           />
           {errors.fees && <p className="field-error">{errors.fees}</p>}
+          <div className="field">
+            <label className="check-row">
+              <input type="checkbox" checked={draft.autoPayment}
+                onChange={(event) => set({ autoPayment: event.target.checked })} />
+              자동납부 학원이에요 (자동이체·자동결제)
+            </label>
+            {draft.autoPayment && (
+              <p className="muted">
+                납부일이 되면 자동으로 '냄'으로 표시하고 미납 알림을 보내지 않습니다. 실제 낸 날과 금액을 남기고
+                싶으면 납부 화면에서 항목을 눌러 기록하세요.
+              </p>
+            )}
+          </div>
         </div>
 
         <div className="card form-section">

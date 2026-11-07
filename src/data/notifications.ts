@@ -107,7 +107,8 @@ export function scheduledNotifications({ data, rules, from, days, feeContext }: 
           })
         }
       }
-      if (overdue.enabled && overdue.timings[0]) {
+      // 자동납부 항목은 납부일이 되면 자동으로 '냄'이 되므로 미납 알림을 만들지 않습니다.
+      if (overdue.enabled && overdue.timings[0] && !view.auto) {
         // 납부일 다음날(before)부터 매일, 납부 완료를 체크할 때까지
         const timing = overdue.timings[0]
         const start = addDays(view.dueOn, Math.max(1, timing.before))

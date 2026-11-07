@@ -33,6 +33,8 @@ export interface AcademyDraft {
   endedOn?: DateStr
   schedules: Period<TimeSlot[]>[]
   fees: Period<FeeDraft>[]
+  /** 자동납부 (자동이체·자동결제). 납부일이 되면 자동으로 낸 것으로 표시 */
+  autoPayment: boolean
   makeupRule: MakeupRule
 }
 
@@ -80,6 +82,7 @@ export function newAcademyDraft(childId: string, color: string): AcademyDraft {
     startedOn,
     schedules: [{ id: newId(), startsOn: startedOn, value: [] }],
     fees: [{ id: newId(), startsOn: startedOn, value: defaultFeeDraft(startedOn) }],
+    autoPayment: false,
     makeupRule: defaultMakeupRule(),
   }
 }
@@ -113,11 +116,12 @@ export function draftFromAcademy(academy: Academy): AcademyDraft {
     endedOn: academy.endedOn,
     schedules: academy.schedules,
     fees: academy.fees.map((period) => ({ ...period, value: feeDraftFromPlan(period.value, academy.startedOn) })),
+    autoPayment: academy.autoPayment ?? false,
     makeupRule: academy.makeupRule,
   }
 }
 
-function feePlanFromDraft(draft: FeeDraft, amount: number, isFirst: boolean): FeePlan {
+function feePlanFromDraft(draft: FeeDraft, amount: number): FeePlan {
   switch (draft.type) {
     case 'monthly':
       return { type: 'monthly', amount, dueDay: draft.dueDay }
@@ -127,8 +131,8 @@ function feePlanFromDraft(draft: FeeDraft, amount: number, isFirst: boolean): Fe
         amount,
         sessionCount: draft.sessionCount,
         absenceCounting: draft.absenceCounting,
-        // 이미 들은 회차는 앱 기록을 시작할 때(첫 기간)만 의미가 있습니다.
-        usedAtStart: isFirst ? Math.min(draft.usedAtStart, draft.sessionCount - 1) : 0,
+        // 이 수강료가 시작할 때 지금 묶음에서 이미 들은 회차. 첫 기간은 앱 기록 시작, 뒤 기간은 수강료가 바뀌는 날 기준
+        usedAtStart: Math.min(draft.usedAtStart, draft.sessionCount - 1),
       }
     case 'period':
       return { type: 'period', amount, months: draft.months, firstDueOn: draft.firstDueOn }
@@ -191,8 +195,9 @@ export function validateDraft(draft: AcademyDraft): { errors: DraftErrors; input
       schedules: draft.schedules,
       fees: draft.fees.map((period, index) => ({
         ...period,
-        value: feePlanFromDraft(period.value, amounts[index], index === 0),
+        value: feePlanFromDraft(period.value, amounts[index]),
       })),
+      autoPayment: draft.autoPayment,
       makeupRule: draft.makeupRule,
     },
   }

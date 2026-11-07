@@ -1,5 +1,5 @@
 import { addDays, addMonths, dateParts, dayOfMonthClamped, startOfMonth, toDateStr, type DateStr } from '../utils/date'
-import { buildLessonViews } from './lessonPlan'
+import { buildLessonViews, type LessonView } from './lessonPlan'
 import { makeupState } from './makeupRules'
 import type { AbsenceCounting, Academy, FeePlan, Lesson, Makeup, Payment, PaymentKind, PaymentMethod } from './types'
 
@@ -31,6 +31,29 @@ const SESSION_LOOKAHEAD_DAYS = 180
  * 결과: 결석 하나에 보강까지 다녀오면 어느 방식이든 회차는 정확히 1 늘어납니다.
  * 'ifNoMakeup'은 보강이 미정·예정인 동안 결석이 회차에 안 들어가고, 보강 안 함·기한 만료가 되면 그때 들어갑니다.
  */
+function countsAsSession(view: LessonView, counting: AbsenceCounting, context: FeeContext): boolean {
+  switch (view.status) {
+    case 'attended':
+    case 'planned':
+      return true
+    case 'cancelled':
+      return false
+    case 'makeup': {
+      if (counting !== 'always') return true
+      const makeup = context.makeups.find((item) => item.id === view.record?.makeupId)
+      return makeup?.reason !== 'absent'
+    }
+    case 'absent': {
+      if (counting === 'always') return true
+      if (counting === 'never') return false
+      const makeup = context.makeups.find((item) => item.lessonId === view.record?.id)
+      if (!makeup) return true
+      const state = makeupState(makeup, context.todayStr)
+      return state === 'skipped' || state === 'expired'
+    }
+  }
+}
+
 export function countedSessionDates(
   academy: Academy,
   from: DateStr,
@@ -39,30 +62,7 @@ export function countedSessionDates(
   context: FeeContext,
 ): DateStr[] {
   const views = buildLessonViews([academy], context.lessons, from, to, context.todayStr)
-  return views
-    .filter((view) => {
-      switch (view.status) {
-        case 'attended':
-        case 'planned':
-          return true
-        case 'cancelled':
-          return false
-        case 'makeup': {
-          if (counting !== 'always') return true
-          const makeup = context.makeups.find((item) => item.id === view.record?.makeupId)
-          return makeup?.reason !== 'absent'
-        }
-        case 'absent': {
-          if (counting === 'always') return true
-          if (counting === 'never') return false
-          const makeup = context.makeups.find((item) => item.lessonId === view.record?.id)
-          if (!makeup) return true
-          const state = makeupState(makeup, context.todayStr)
-          return state === 'skipped' || state === 'expired'
-        }
-      }
-    })
-    .map((view) => view.date)
+  return views.filter((view) => countsAsSession(view, counting, context)).map((view) => view.date)
 }
 
 /** until까지의 수강료 납부 항목 (수강 시작일부터, 기간별 수강료 방식을 따라) */
@@ -99,7 +99,9 @@ export function plannedDues(academy: Academy, until: DateStr, context: FeeContex
         // 묶음의 첫 수업일이 납부일입니다. 기간이 끝나기 전까지의 수업을 셉니다.
         const sessionsTo = minDate(periodEnd, addDays(end, SESSION_LOOKAHEAD_DAYS))!
         const dates = countedSessionDates(academy, start, sessionsTo, plan.absenceCounting, context)
-        const used = index === 0 ? plan.usedAtStart : 0
+        // 이 기간이 시작할 때 이미 들은 회차. 첫 기간은 앱 기록 시작, 뒤 기간은 수강료가 바뀌는 날 기준입니다.
+        // (없으면 수강료를 바꿀 때 쓰다 만 묶음이 사라져 새 기간 첫 수업에서 또 내라고 나옵니다)
+        const used = Math.min(plan.usedAtStart, plan.sessionCount - 1)
         // 이미 들은 회차가 있으면 지금 묶음은 이미 낸 것이므로 다음 묶음부터 셉니다.
         let block = used > 0 ? 1 : 0
         for (let first = used > 0 ? plan.sessionCount - used : 0; first < dates.length; first += plan.sessionCount, block++) {
@@ -126,18 +128,31 @@ export interface SessionProgress {
   undecidedMakeups: number
 }
 
-/** 회차 단위 학원이면 지금 묶음의 진행 상황, 아니면 null */
-export function sessionProgress(academy: Academy, context: FeeContext): SessionProgress | null {
+/**
+ * 회차 단위 학원이면 지금 묶음의 진행 상황, 아니면 null
+ * - used: 실제로 쓴 회차. 오늘 수업이라도 아직 기록이 없으면(예정) 세지 않습니다. 출석을 기록했거나 날짜가 지나면 셉니다.
+ *   묶음을 다 썼으면 0으로 돌리지 않고 '8/8'처럼 꽉 찬 것으로 보여줍니다. (다음 수업부터 새 묶음)
+ * - nextDueOn: 아직 안 낸 다음 납부일 (오늘 포함). 미리 냈거나 자동납부로 처리된 묶음은 건너뜁니다.
+ */
+export function sessionProgress(academy: Academy, context: FeeContext, payments: Payment[] = []): SessionProgress | null {
   const { todayStr } = context
   const index = academy.fees.reduce((found, period, i) => (period.startsOn <= todayStr ? i : found), 0)
   const period = academy.fees[index]
   if (period.value.type !== 'sessions') return null
   const plan = period.value
   const start = index === 0 ? academy.startedOn : period.startsOn
-  const counted = countedSessionDates(academy, start, todayStr, plan.absenceCounting, context).length
-  const total = (index === 0 ? plan.usedAtStart : 0) + counted
+  const views = buildLessonViews([academy], context.lessons, start, todayStr, todayStr)
+  const counted = views.filter(
+    (view) => view.status !== 'planned' && countsAsSession(view, plan.absenceCounting, context),
+  ).length
+  const total = Math.min(plan.usedAtStart, plan.sessionCount - 1) + counted
+  const paidKeys = new Set(payments.filter((payment) => payment.paidOn && payment.dueKey).map((payment) => payment.dueKey))
   const nextDueOn = plannedDues(academy, addDays(todayStr, SESSION_LOOKAHEAD_DAYS), context).find(
-    (due) => due.dueOn > todayStr && due.key.includes(`|s|${period.id}|`),
+    (due) =>
+      due.key.includes(`|s|${period.id}|`) &&
+      due.dueOn >= todayStr &&
+      !paidKeys.has(due.key) &&
+      !(academy.autoPayment && due.dueOn <= todayStr),
   )?.dueOn
   const undecidedMakeups =
     plan.absenceCounting === 'ifNoMakeup'
@@ -147,7 +162,8 @@ export function sessionProgress(academy: Academy, context: FeeContext): SessionP
           return state === 'pending' || state === 'scheduled'
         }).length
       : 0
-  return { used: total % plan.sessionCount, total: plan.sessionCount, nextDueOn, undecidedMakeups }
+  const used = total === 0 ? 0 : ((total - 1) % plan.sessionCount) + 1
+  return { used, total: plan.sessionCount, nextDueOn, undecidedMakeups }
 }
 
 // ===== 화면에 보여줄 납부 =====
@@ -188,6 +204,8 @@ export interface PaymentView {
   status: PaymentStatus
   /** 앱에 학원을 등록하기 전 항목이라 기록 없이 낸 것으로 본 것 */
   assumed: boolean
+  /** 자동납부 학원의 수강료 항목. 납부일이 되면 기록 없이 낸 것으로 봅니다. */
+  auto: boolean
 }
 
 /** 학원을 앱에 등록한 날 (createdAt을 이 기기의 날짜로) */
@@ -204,7 +222,7 @@ export function buildPaymentViews(
   to: DateStr,
   context: FeeContext,
 ): PaymentView[] {
-  const views = new Map<string, Omit<PaymentView, 'status' | 'assumed'>>()
+  const views = new Map<string, Omit<PaymentView, 'status' | 'assumed' | 'auto'>>()
   for (const academy of academies) {
     for (const due of plannedDues(academy, to, context)) {
       if (due.dueOn < from) continue
@@ -233,13 +251,18 @@ export function buildPaymentViews(
 
   const academyOrder = new Map(academies.map((academy, index) => [academy.id, index]))
   const registered = new Map(academies.map((academy) => [academy.id, registeredOn(academy)]))
+  const autoPay = new Map(academies.map((academy) => [academy.id, academy.autoPayment ?? false]))
   return [...views.values()]
     .map((view): PaymentView => {
-      if (view.record?.paidOn) return { ...view, status: 'paid', assumed: false }
+      // 수강료 방식에서 계산한 항목(planned)만 자동납부 대상입니다. 교재비 같은 추가 납부는 직접 체크합니다.
+      const auto = view.planned && (autoPay.get(view.academyId) ?? false)
+      if (view.record?.paidOn) return { ...view, status: 'paid', assumed: false, auto }
+      // 자동납부: 납부일이 되면 기록 없이 낸 것으로 봅니다. (실제 낸 날을 남기고 싶으면 눌러서 기록)
+      if (auto && view.dueOn <= context.todayStr) return { ...view, status: 'paid', assumed: false, auto }
       // 앱에 학원을 등록하기 전에 낼 날이 지난 수강료는 이미 낸 것으로 봅니다. (지난 미납이 잔뜩 쌓이지 않게)
       const before = registered.get(view.academyId)
-      if (view.planned && before && view.dueOn < before) return { ...view, status: 'paid', assumed: true }
-      return { ...view, status: view.dueOn < context.todayStr ? 'overdue' : 'unpaid', assumed: false }
+      if (view.planned && before && view.dueOn < before) return { ...view, status: 'paid', assumed: true, auto }
+      return { ...view, status: view.dueOn < context.todayStr ? 'overdue' : 'unpaid', assumed: false, auto }
     })
     .sort((a, b) => a.dueOn.localeCompare(b.dueOn) || (academyOrder.get(a.academyId) ?? 0) - (academyOrder.get(b.academyId) ?? 0))
 }

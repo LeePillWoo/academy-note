@@ -73,18 +73,22 @@ export default function FeeEditor({ idPrefix, value, onChange, isFirst }: FeeEdi
               ))}
             </select>
           </div>
-          {isFirst && (
-            <div className="field">
-              <label className="field-label" htmlFor={`${idPrefix}-used`}>지금 묶음에서 이미 들은 회차</label>
-              <select id={`${idPrefix}-used`} className="input" value={Math.min(value.usedAtStart, value.sessionCount - 1)}
-                onChange={(event) => set({ usedAtStart: Number(event.target.value) })}>
-                {range(0, value.sessionCount - 1).map((count) => (
-                  <option key={count} value={count}>{count === 0 ? '없음 (새 묶음부터 시작)' : `${count}회`}</option>
-                ))}
-              </select>
-              <p className="muted">수강 시작일 전에 이미 들은 회차를 넣으면 남은 회차를 맞게 계산합니다.</p>
-            </div>
-          )}
+          <div className="field">
+            <label className="field-label" htmlFor={`${idPrefix}-used`}>
+              {isFirst ? '지금 묶음에서 이미 들은 회차' : '바뀌는 날 기준, 지금 묶음에서 이미 들은 회차'}
+            </label>
+            <select id={`${idPrefix}-used`} className="input" value={Math.min(value.usedAtStart, value.sessionCount - 1)}
+              onChange={(event) => set({ usedAtStart: Number(event.target.value) })}>
+              {range(0, value.sessionCount - 1).map((count) => (
+                <option key={count} value={count}>{count === 0 ? '없음 (새 묶음부터 시작)' : `${count}회`}</option>
+              ))}
+            </select>
+            <p className="muted">
+              {isFirst
+                ? '수강 시작일 전에 이미 들은 회차를 넣으면 남은 회차를 맞게 계산합니다.'
+                : '수강료가 바뀌는 날 쓰던 묶음이 남아 있으면 넣으세요. 남은 회차를 다 쓴 다음부터 새로 냅니다.'}
+            </p>
+          </div>
         </>
       )}
 

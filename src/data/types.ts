@@ -106,6 +106,8 @@ export interface Academy extends BaseRecord {
   schedules: Period<TimeSlot[]>[]
   /** 수강료 (기간별, startsOn 순서) */
   fees: Period<FeePlan>[]
+  /** 수강료 자동납부 (자동이체·카드 자동결제). 납부일이 되면 자동으로 낸 것으로 표시하고 미납 알림을 보내지 않습니다. */
+  autoPayment?: boolean
   makeupRule: MakeupRule
 }
 

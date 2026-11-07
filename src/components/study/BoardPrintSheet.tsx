@@ -165,23 +165,34 @@ function PrintCheck({ subjects, tasksOf, dates, isDone }: PrintTableProps) {
         <col span={7} />
       </colgroup>
       <DayHeads dates={dates} label="학습 내용" />
-      {subjects.map((subject) => (
-        <tbody key={subject.id} style={{ '--c': subject.color } as CSSProperties}>
-          <tr className="print-band">
-            <th colSpan={8}>{subject.name}</th>
-          </tr>
-          {tasksOf(subject.id).map((task) => (
-            <tr key={task.id}>
-              <th className="print-task">{task.name}</th>
-              {dates.map((date) => {
-                const planned = task.weekdays.includes(weekdayOf(date))
-                const done = isDone(task.id, date)
-                return <td key={date}>{planned || done ? <PrintBox done={done} /> : <span className="print-dot" />}</td>
-              })}
+      {subjects.map((subject) => {
+        const tasks = tasksOf(subject.id)
+        // 학습 내용이 없는 과목은 과목 띠에도 요일 칸을 나누고, 계획 없는 요일과 같은 규칙으로 점만 찍습니다.
+        const empty = tasks.length === 0
+        return (
+          <tbody key={subject.id} style={{ '--c': subject.color } as CSSProperties}>
+            <tr className="print-band">
+              <th colSpan={empty ? 1 : 8}>{subject.name}</th>
+              {empty &&
+                dates.map((date) => (
+                  <td key={date}>
+                    <span className="print-dot" />
+                  </td>
+                ))}
             </tr>
-          ))}
-        </tbody>
-      ))}
+            {tasks.map((task) => (
+              <tr key={task.id}>
+                <th className="print-task">{task.name}</th>
+                {dates.map((date) => {
+                  const planned = task.weekdays.includes(weekdayOf(date))
+                  const done = isDone(task.id, date)
+                  return <td key={date}>{planned || done ? <PrintBox done={done} /> : <span className="print-dot" />}</td>
+                })}
+              </tr>
+            ))}
+          </tbody>
+        )
+      })}
     </table>
   )
 }

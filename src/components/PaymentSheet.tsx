@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useAcademies } from '../data/academies'
 import { useChildren } from '../data/children'
-import { PAYMENT_KIND_LABELS, PAYMENT_METHOD_LABELS, PAYMENT_STATUS_LABELS, type PaymentView } from '../data/paymentPlan'
+import { PAYMENT_KIND_LABELS, PAYMENT_METHOD_LABELS, type PaymentView } from '../data/paymentPlan'
+import PaymentStatusBadge from './PaymentStatusBadge'
 import { lastMethod, latestPaidPayment, rememberMethod, usePayments } from '../data/payments'
 import type { PaymentMethod } from '../data/types'
 import { formatDate, today, type DateStr } from '../utils/date'
@@ -38,8 +39,8 @@ function PaymentEditor({ view, onDone }: { view: PaymentView; onDone(): void }) 
   const { payments, pay, unpay, removePayment } = usePayments()
   const academy = academies.find((item) => item.id === view.academyId)
   const child = children.find((item) => item.id === academy?.childId)
-  // 앱 등록 전이라 낸 것으로 본 항목은 아직 기록이 없으니 '납부 완료'로 기록할 수 있게 둡니다.
-  const paid = view.status === 'paid' && !view.assumed
+  // 기록이 있어야 '수정'과 '납부 취소'가 됩니다. 앱 등록 전·자동납부로 낸 것으로 본 항목은 기록이 없으니 '납부 완료'로 기록할 수 있게 둡니다.
+  const paid = Boolean(view.record?.paidOn)
 
   // 자동완성: 같은 학원에 지난번 낸 기록이 있으면 금액(미정일 때), 방법, 메모를 미리 채웁니다.
   const previous = view.record ? undefined : latestPaidPayment(payments, view.academyId)
@@ -79,10 +80,15 @@ function PaymentEditor({ view, onDone }: { view: PaymentView; onDone(): void }) 
           {name} · {formatDate(view.dueOn)}까지
         </p>
         <p>
-          <span className={`badge payment-${view.status}${view.assumed ? ' is-assumed' : ''}`}>{PAYMENT_STATUS_LABELS[view.status]}</span>
+          <PaymentStatusBadge view={view} />
         </p>
       </div>
       {view.assumed && <p className="note">앱에 학원을 등록하기 전 항목이라 낸 것으로 봅니다. 실제로 낸 날과 금액을 남기려면 기록하세요.</p>}
+      {view.auto && !view.record && (
+        <p className="note">
+          자동납부 학원이라 납부일이 되면 자동으로 낸 것으로 표시합니다. 실제로 낸 날과 금액을 남기려면 아래에 기록하세요.
+        </p>
+      )}
       {previous?.paidOn && (
         <p className="muted">
           지난번 {formatDate(previous.paidOn)} · {PAYMENT_METHOD_LABELS[previous.method ?? 'transfer']} · {formatWon(previous.amount)}
