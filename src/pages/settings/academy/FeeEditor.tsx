@@ -85,7 +85,7 @@ export default function FeeEditor({ idPrefix, value, onChange, isFirst }: FeeEdi
             </select>
             <p className="muted">
               {isFirst
-                ? '수강 시작일 전에 이미 들은 회차를 넣으면 남은 회차를 맞게 계산합니다.'
+                ? '학원을 앱에 등록하는 날(오늘) 기준으로 넣으세요. 등록 전 수업은 다시 세지 않고 이 값부터 이어 셉니다.'
                 : '수강료가 바뀌는 날 쓰던 묶음이 남아 있으면 넣으세요. 남은 회차를 다 쓴 다음부터 새로 냅니다.'}
             </p>
           </div>

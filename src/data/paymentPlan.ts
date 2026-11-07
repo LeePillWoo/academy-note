@@ -23,6 +23,16 @@ export interface PlannedDue {
 const SESSION_LOOKAHEAD_DAYS = 180
 
 /**
+ * 회차를 세기 시작하는 날: 기간 시작일과 앱에 등록한 날 중 늦은 쪽.
+ * 등록 전 수업은 기록이 없어 자동 출석으로 보이지만, 그 몫은 "이미 들은 회차"(usedAtStart)가 대신하므로
+ * 다시 세면 이중이 됩니다. (수강 시작일을 실제 시작일로 넣은 학원에서 회차가 밀리던 문제)
+ */
+function sessionCountFrom(academy: Academy, periodStart: DateStr): DateStr {
+  const registered = registeredOn(academy)
+  return registered && registered > periodStart ? registered : periodStart
+}
+
+/**
  * 회차로 세는 수업 날짜 (날짜 순서). 앞으로의 수업도 예정대로 세어 다음 납부일을 미리 알 수 있게 합니다.
  * - 출석, 예정: 셈 / 휴강: 안 셈
  * - 결석: 'always'면 셈, 'never'면 안 셈, 'ifNoMakeup'이면 보강이 안 되는 것(보강 안 함, 기한 만료, 보강 없음)만 셈
@@ -96,9 +106,9 @@ export function plannedDues(academy: Academy, until: DateStr, context: FeeContex
         break
       }
       case 'sessions': {
-        // 묶음의 첫 수업일이 납부일입니다. 기간이 끝나기 전까지의 수업을 셉니다.
+        // 묶음의 첫 수업일이 납부일입니다. 등록한 날부터 기간이 끝나기 전까지의 수업을 셉니다.
         const sessionsTo = minDate(periodEnd, addDays(end, SESSION_LOOKAHEAD_DAYS))!
-        const dates = countedSessionDates(academy, start, sessionsTo, plan.absenceCounting, context)
+        const dates = countedSessionDates(academy, sessionCountFrom(academy, start), sessionsTo, plan.absenceCounting, context)
         // 이 기간이 시작할 때 이미 들은 회차. 첫 기간은 앱 기록 시작, 뒤 기간은 수강료가 바뀌는 날 기준입니다.
         // (없으면 수강료를 바꿀 때 쓰다 만 묶음이 사라져 새 기간 첫 수업에서 또 내라고 나옵니다)
         const used = Math.min(plan.usedAtStart, plan.sessionCount - 1)
@@ -141,7 +151,7 @@ export function sessionProgress(academy: Academy, context: FeeContext, payments:
   if (period.value.type !== 'sessions') return null
   const plan = period.value
   const start = index === 0 ? academy.startedOn : period.startsOn
-  const views = buildLessonViews([academy], context.lessons, start, todayStr, todayStr)
+  const views = buildLessonViews([academy], context.lessons, sessionCountFrom(academy, start), todayStr, todayStr)
   const counted = views.filter(
     (view) => view.status !== 'planned' && countsAsSession(view, plan.absenceCounting, context),
   ).length

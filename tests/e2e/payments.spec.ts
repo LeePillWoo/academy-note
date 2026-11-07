@@ -38,11 +38,12 @@ test('납부: 등록 전은 낸 것으로, 미납과 금액 미정, 납부 완�
   // 10월분은 앱 등록 전이라 낸 것으로 봐서 지난 미납이 없음
   await expect(page.locator('.section-heading', { hasText: '지난 미납' })).toHaveCount(0)
 
-  // 회차 현황: 이미 3회 + 10/1~11/19 매일 50회 = 53회 (오늘 11/20은 아직 안 들어서 세지 않음)
-  // → 지금 묶음 5/8회, 다음 납부는 11/23
+  // 회차 현황: 등록 전(10/1~11/3) 수업은 '이미 들은 3회'가 대신하므로 다시 세지 않음
+  // → 3회 + 등록(11/4)~11/19 매일 16회 = 19회 → 지금 묶음 3/8회
+  // 납부일(묶음 경계)도 등록일부터: 11/9, 11/17, 11/25 … → 오늘(11/20) 뒤 다음 납부는 11/25
   const progress = page.locator('.progress-row', { hasText: '영어학원' })
-  await expect(progress).toContainText('5/8회')
-  await expect(progress).toContainText('다음 납부 11월 23일 (월)')
+  await expect(progress).toContainText('3/8회')
+  await expect(progress).toContainText('다음 납부 11월 25일 (수)')
   await page.screenshot({ path: testInfo.outputPath('1-payments.png'), fullPage: true })
   await expectNoHorizontalOverflow(page)
 

@@ -251,3 +251,37 @@ describe('자동납부', () => {
     ])
   })
 })
+
+describe('중간 등록: 등록 전 수업은 다시 세지 않음 (이미 들은 회차가 그 몫)', () => {
+  // 사용자가 겪은 상황: 토요일 수업, 12회 57만 원, 실제 시작일(9-19)로 등록, 등록 시점에 7회 들음
+  const saturday: Academy = {
+    ...academy({ type: 'sessions', amount: 570_000, sessionCount: 12, absenceCounting: 'never', usedAtStart: 7 }, '2026-09-19'),
+    schedules: [{ id: 's1', startsOn: '2026-09-19', value: [{ weekday: 6, start: '10:00', end: '11:00' }] }],
+    createdAt: '2026-11-06T09:00:00+09:00', // 금요일에 등록
+  }
+
+  it('등록한 날부터 세서 7/12 (전에는 지난 토요일 7개가 또 세어져 2/12로 보임)', () => {
+    // 오늘(11-07, 토)은 아직 안 들어서 제외 → 등록 뒤 들은 수업 0 + 이미 들은 7
+    expect(sessionProgress(saturday, context('2026-11-07'))).toEqual({
+      used: 7,
+      total: 12,
+      // 남은 5회(11-07, 14, 21, 28, 12-05)를 다 쓰고 여섯 번째 토요일이 새 묶음 납부일
+      nextDueOn: '2026-12-12',
+      undecidedMakeups: 0,
+    })
+    // 다음 토요일(11-08, 수업 없는 날): 11-07을 들었으니 8/12
+    expect(sessionProgress(saturday, context('2026-11-08'))?.used).toBe(8)
+  })
+
+  it('납부일(묶음 경계)도 등록한 날부터 센 수업으로 잡음', () => {
+    const dues = plannedDues(saturday, '2026-12-31', context('2026-11-07'))
+    expect(dues.map((due) => [due.dueOn, due.amount])).toEqual([['2026-12-12', 570_000]])
+  })
+
+  it('등록 기록이 없는 데이터(테스트용)는 지금처럼 시작일부터 셈', () => {
+    // createdAt이 비어 있으면 기준을 바꾸지 않습니다 (기존 테스트·백업 데이터 보호)
+    const plain = { ...saturday, createdAt: '' }
+    // 9-19부터 토요일 7개(9/19~10/31) + 이미 7회 = 14회 → 12회 묶음을 넘겨 2회째
+    expect(sessionProgress(plain, context('2026-11-07'))?.used).toBe(2)
+  })
+})

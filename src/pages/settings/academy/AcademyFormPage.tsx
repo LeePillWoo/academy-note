@@ -174,7 +174,10 @@ function AcademyForm({ academyId }: { academyId?: string }) {
             <label className="field-label" htmlFor="academy-started">수강 시작일</label>
             <DateField id="academy-started" label="수강 시작일" value={draft.startedOn}
               onChange={(startedOn) => set({ startedOn })} />
-            <p className="muted">이날부터 수업일과 납부 항목을 만듭니다. 오래 다닌 학원이면 앱에 기록을 시작할 날을 넣으세요.</p>
+            <p className="muted">
+              이날부터 수업일과 납부 항목을 만듭니다. 오래 다닌 학원은 실제 시작일을 넣어도 됩니다. 등록 전
+              항목은 낸 것·들은 것으로 보고, 회차는 "이미 들은 회차"부터 이어 셉니다.
+            </p>
           </div>
 
           <div className="field">
