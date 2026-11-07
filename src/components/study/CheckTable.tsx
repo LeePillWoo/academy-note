@@ -33,7 +33,7 @@ export default function CheckTable({ subjects, tasksOf, dates, todayStr, isDone,
                         {progress.done}/{progress.planned}
                       </span>
                       <span className="progress" aria-hidden="true">
-                        <span style={{ width: `${percent(progress)}%` }} />
+                        <span style={{ transform: `scaleX(${percent(progress) / 100})` }} />
                       </span>
                     </span>
                   )}

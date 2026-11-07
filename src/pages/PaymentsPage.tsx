@@ -151,7 +151,7 @@ export default function PaymentsPage() {
                     {undecidedMakeups > 0 && ` · 보강 미정 ${undecidedMakeups}개 (결과에 따라 회차가 바뀜)`}
                   </span>
                   <span className="progress" aria-hidden="true">
-                    <span style={{ width: `${(used / count) * 100}%` }} />
+                    <span style={{ transform: `scaleX(${used / count})` }} />
                   </span>
                 </span>
                 <span className="amount">{used}/{count}회</span>

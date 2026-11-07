@@ -79,7 +79,7 @@ export default function WeekBoard({ child, weekStart, onChangeWeek, view }: Week
             </span>
           </p>
           <span className="progress" aria-hidden="true">
-            <span style={{ width: `${percent(total)}%` }} />
+            <span style={{ transform: `scaleX(${percent(total) / 100})` }} />
           </span>
         </div>
       )}

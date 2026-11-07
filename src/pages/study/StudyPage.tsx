@@ -128,7 +128,7 @@ function StudyOverview() {
                     </span>
                   </span>
                   <span className="progress" aria-hidden="true">
-                    <span style={{ width: `${percent(summary.week)}%` }} />
+                    <span style={{ transform: `scaleX(${percent(summary.week) / 100})` }} />
                   </span>
                 </>
               )}
