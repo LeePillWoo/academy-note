@@ -146,3 +146,39 @@ test('자동납부 학원: 자동 체크, 자동 예정, 미납 알림 제외', 
   await sheet.getByRole('button', { name: '납부 취소' }).click()
   await expect(row('미술학원', '11월분')).toContainText('자동납부')
 })
+
+// 전달에 미리 내는 학원: 11월분을 10월 25일에
+test('월 단위 선납: 납부일을 전달로 잡기', async ({ page }, testInfo) => {
+  await page.clock.setFixedTime(new Date('2026-10-20T09:00:00+09:00'))
+  await addChildren(page, ['첫째'])
+
+  // 수강료: 월 30만 원, 전달 25일 납부
+  await page.goto('/#/settings/academies/new')
+  await page.getByLabel('학원 이름').fill('미리내는학원')
+  await toggleWeekdays(page, '수업', ['월', '수'])
+  await page.getByLabel('수업 월요일 시작 시각').fill('16:00')
+  await page.getByLabel('수업 월요일 끝 시각').fill('17:00')
+  await page.getByLabel('수업 수요일 시작 시각').fill('16:00')
+  await page.getByLabel('수업 수요일 끝 시각').fill('17:00')
+  await page.getByLabel('한 달 금액').fill('300000')
+  await page.getByLabel('납부 시기').selectOption('1')
+  await page.getByLabel('납부일').selectOption('25')
+  await expect(page.getByText('다음 달 수강료를 전달에 미리 냅니다.')).toBeVisible()
+  await page.screenshot({ path: testInfo.outputPath('1-fee-prepay.png'), fullPage: true })
+  await page.getByRole('button', { name: '저장' }).click()
+  await expect(page.getByRole('heading', { name: '학원 추가' })).toHaveCount(0)
+
+  // 학원 목록 설명도 '전달 25일'
+  await expect(page.locator('.list-link', { hasText: '미리내는학원' })).toContainText('월 30만 원 · 전달 25일')
+
+  // 10월 화면에 '11월분 · 10월 25일까지'가 보임
+  await page.goto('/#/payments')
+  const row = (what: string) => page.locator('.list-button', { hasText: '미리내는학원' }).filter({ hasText: what })
+  await expect(row('11월분')).toContainText('10월 25일 (일)까지')
+  await expect(row('11월분')).toContainText('30만 원')
+  await page.screenshot({ path: testInfo.outputPath('2-payments-prepay.png'), fullPage: true })
+
+  // 11월로 넘기면 '12월분 · 11월 25일까지'
+  await page.getByRole('button', { name: '다음 달' }).click()
+  await expect(row('12월분')).toContainText('11월 25일 (수)까지')
+})

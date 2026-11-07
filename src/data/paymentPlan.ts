@@ -90,10 +90,17 @@ export function plannedDues(academy: Academy, until: DateStr, context: FeeContex
 
     switch (plan.type) {
       case 'monthly': {
-        for (let month = startOfMonth(start); month <= end; month = addMonths(month, 1)) {
-          const { year, month: monthNumber } = dateParts(month)
-          const dueOn = dayOfMonthClamped(year, monthNumber, plan.dueDay)
-          if (dueOn >= start && dueOn <= end) add(`m|${month.slice(0, 7)}`, dueOn, `${monthNumber}월분`)
+        // ahead=1이면 전달에 미리 냅니다. (예: 11월분을 10월 25일에)
+        const ahead = plan.dueAheadMonths ?? 0
+        // month = 수강료가 해당하는 달, dueMonth = 실제로 내는 달
+        for (let month = startOfMonth(start); ; month = addMonths(month, 1)) {
+          if (periodEnd && month > periodEnd) break
+          const dueMonth = addMonths(month, -ahead)
+          const { year, month: dueMonthNumber } = dateParts(dueMonth)
+          const dueOn = dayOfMonthClamped(year, dueMonthNumber, plan.dueDay)
+          if (dueOn > end) break
+          // 전달 납부는 내는 날이 수강 시작일보다 앞설 수 있어 '해당 달'을 기준으로 거릅니다.
+          if (ahead > 0 || dueOn >= start) add(`m|${month.slice(0, 7)}`, dueOn, `${dateParts(month).month}월분`)
         }
         break
       }

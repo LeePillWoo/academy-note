@@ -49,15 +49,16 @@ export const FEE_PLAN_LABELS: Record<FeePlan['type'], string> = {
   period: '기간 단위',
 }
 
-export function describeDueDay(dueDay: number): string {
-  return dueDay >= 31 ? '매월 말일' : `매월 ${dueDay}일`
+export function describeDueDay(dueDay: number, dueAheadMonths = 0): string {
+  const day = dueDay >= 31 ? '말일' : `${dueDay}일`
+  return dueAheadMonths > 0 ? `전달 ${day}` : `매월 ${day}`
 }
 
 /** 예: '월 25만 원 · 매월 5일', '8회 20만 원', '3개월 60만 원' */
 export function describeFee(plan: FeePlan): string {
   switch (plan.type) {
     case 'monthly':
-      return `월 ${formatFee(plan.amount)} · ${describeDueDay(plan.dueDay)}`
+      return `월 ${formatFee(plan.amount)} · ${describeDueDay(plan.dueDay, plan.dueAheadMonths)}`
     case 'sessions':
       return `${plan.sessionCount}회 ${formatFee(plan.amount)}`
     case 'period':

@@ -44,6 +44,11 @@ export type FeePlan =
       amount: number
       /** 매월 납부일 (1~31, 그 달에 없는 날이면 말일) */
       dueDay: number
+      /**
+       * 몇 달 앞서 내는지. 0(기본)이면 그 달에, 1이면 **전달에 미리** 냅니다.
+       * 예: 1이고 납부일이 25일이면 11월분을 10월 25일에 냅니다.
+       */
+      dueAheadMonths?: number
     }
   | {
       type: 'sessions'

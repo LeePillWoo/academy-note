@@ -39,17 +39,33 @@ export default function FeeEditor({ idPrefix, value, onChange, isFirst }: FeeEdi
       </div>
 
       {value.type === 'monthly' && (
-        <div className="field">
-          <label className="field-label" htmlFor={`${idPrefix}-due-day`}>납부일</label>
-          <select id={`${idPrefix}-due-day`} className="input" value={value.dueDay}
-            onChange={(event) => set({ dueDay: Number(event.target.value) })}>
-            {range(1, 30).map((day) => (
-              <option key={day} value={day}>매월 {day}일</option>
-            ))}
-            <option value={31}>매월 말일</option>
-          </select>
-          <p className="muted">그 달에 없는 날(예: 2월 30일)이면 말일에 냅니다.</p>
-        </div>
+        <>
+          <div className="field">
+            <label className="field-label" htmlFor={`${idPrefix}-due-ahead`}>납부 시기</label>
+            <select id={`${idPrefix}-due-ahead`} className="input" value={value.dueAheadMonths}
+              onChange={(event) => set({ dueAheadMonths: Number(event.target.value) })}>
+              <option value={0}>그 달에 냄</option>
+              <option value={1}>전달에 미리 냄 (선납)</option>
+            </select>
+          </div>
+          <div className="field">
+            <label className="field-label" htmlFor={`${idPrefix}-due-day`}>납부일</label>
+            <select id={`${idPrefix}-due-day`} className="input" value={value.dueDay}
+              onChange={(event) => set({ dueDay: Number(event.target.value) })}>
+              {range(1, 30).map((day) => (
+                <option key={day} value={day}>
+                  {value.dueAheadMonths > 0 ? `전달 ${day}일` : `매월 ${day}일`}
+                </option>
+              ))}
+              <option value={31}>{value.dueAheadMonths > 0 ? '전달 말일' : '매월 말일'}</option>
+            </select>
+            <p className="muted">
+              {value.dueAheadMonths > 0
+                ? `다음 달 수강료를 전달에 미리 냅니다. 예: 11월분을 10월 ${value.dueDay >= 31 ? '말일' : `${value.dueDay}일`}에.`
+                : '그 달에 없는 날(예: 2월 30일)이면 말일에 냅니다.'}
+            </p>
+          </div>
+        </>
       )}
 
       {value.type === 'sessions' && (

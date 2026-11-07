@@ -285,3 +285,52 @@ describe('중간 등록: 등록 전 수업은 다시 세지 않음 (이미 들�
     expect(sessionProgress(plain, context('2026-11-07'))?.used).toBe(2)
   })
 })
+
+describe('월 단위: 전달에 미리 내기 (선납)', () => {
+  // 10월 1일부터 다니고, 다음 달 수강료를 전달 25일에 냅니다. (11월분 → 10월 25일)
+  const prepay = (startedOn = '2026-10-01') =>
+    academy({ type: 'monthly', amount: 300_000, dueDay: 25, dueAheadMonths: 1 }, startedOn)
+
+  it('내는 날은 전달, 이름은 해당 달 (첫 달도 전달에 냄)', () => {
+    const dues = plannedDues(prepay(), '2026-12-31', context('2026-10-01'))
+    expect(dues.map((due) => [due.dueOn, due.title])).toEqual([
+      ['2026-09-25', '10월분'],
+      ['2026-10-25', '11월분'],
+      ['2026-11-25', '12월분'],
+      ['2026-12-25', '1월분'],
+    ])
+  })
+
+  it('그 달에 내기(기본)와 비교: 같은 25일이어도 한 달 앞', () => {
+    const normal = plannedDues(academy({ type: 'monthly', amount: 300_000, dueDay: 25 }, '2026-10-01'), '2026-11-30', context('2026-10-01'))
+    expect(normal.map((due) => [due.dueOn, due.title])).toEqual([
+      ['2026-10-25', '10월분'],
+      ['2026-11-25', '11월분'],
+    ])
+  })
+
+  it('수강 시작 전에 내는 첫 달도 보여줌 (등록이 먼저인 경우)', () => {
+    // 11월 2일부터 다니기로 하고 10월에 미리 등록 → 11월분은 10월 25일에 냄
+    const dues = plannedDues(prepay('2026-11-02'), '2026-11-30', context('2026-10-20'))
+    expect(dues.map((due) => [due.dueOn, due.title])).toEqual([
+      ['2026-10-25', '11월분'],
+      ['2026-11-25', '12월분'],
+    ])
+  })
+
+  it('그만둔 날 뒤의 달은 만들지 않음', () => {
+    const quit: Academy = { ...prepay(), endedOn: '2026-11-15' }
+    // 11월분(10-25)까지만. 12월분은 다니지 않는 달이라 없음
+    expect(plannedDues(quit, '2026-12-31', context('2026-10-01')).map((due) => due.title)).toEqual(['10월분', '11월분'])
+  })
+
+  it('말일 선택도 전달 말일로', () => {
+    const lastDay = academy({ type: 'monthly', amount: 1, dueDay: 31, dueAheadMonths: 1 }, '2026-10-01')
+    expect(plannedDues(lastDay, '2026-12-31', context('2026-10-01')).map((due) => [due.dueOn, due.title])).toEqual([
+      ['2026-09-30', '10월분'],
+      ['2026-10-31', '11월분'],
+      ['2026-11-30', '12월분'],
+      ['2026-12-31', '1월분'],
+    ])
+  })
+})

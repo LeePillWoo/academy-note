@@ -13,6 +13,8 @@ export interface FeeDraft {
   type: FeePlanType
   amountText: string
   dueDay: number
+  /** 0이면 그 달에, 1이면 전달에 미리 냅니다. */
+  dueAheadMonths: number
   sessionCount: number
   absenceCounting: AbsenceCounting
   usedAtStart: number
@@ -63,6 +65,7 @@ export function defaultFeeDraft(startedOn: DateStr): FeeDraft {
     type: 'monthly',
     amountText: '',
     dueDay: Math.min(dateParts(startedOn).day, 31),
+    dueAheadMonths: 0,
     sessionCount: 8,
     absenceCounting: 'never',
     usedAtStart: 0,
@@ -91,7 +94,7 @@ function feeDraftFromPlan(plan: FeePlan, startedOn: DateStr): FeeDraft {
   const base = { ...defaultFeeDraft(startedOn), type: plan.type, amountText: plan.amount ? formatNumber(plan.amount) : '' }
   switch (plan.type) {
     case 'monthly':
-      return { ...base, dueDay: plan.dueDay }
+      return { ...base, dueDay: plan.dueDay, dueAheadMonths: plan.dueAheadMonths ?? 0 }
     case 'sessions':
       return { ...base, sessionCount: plan.sessionCount, absenceCounting: plan.absenceCounting, usedAtStart: plan.usedAtStart }
     case 'period':
@@ -124,7 +127,13 @@ export function draftFromAcademy(academy: Academy): AcademyDraft {
 function feePlanFromDraft(draft: FeeDraft, amount: number): FeePlan {
   switch (draft.type) {
     case 'monthly':
-      return { type: 'monthly', amount, dueDay: draft.dueDay }
+      // 0(그 달에 냄)은 기본값이라 저장하지 않습니다.
+      return {
+        type: 'monthly',
+        amount,
+        dueDay: draft.dueDay,
+        ...(draft.dueAheadMonths > 0 ? { dueAheadMonths: draft.dueAheadMonths } : {}),
+      }
     case 'sessions':
       return {
         type: 'sessions',
