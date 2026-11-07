@@ -317,6 +317,15 @@ test('학습 내용 없이 과목만 요일 체크, 학습 내용이 생기면 �
   const summaryDone = page.locator('.week-summary strong')
 
   await addChildren(page, ['첫째'])
+
+  // 과목 추가 화면은 빈 학습 내용 줄 없이 '학습 내용 추가' 단추만 있습니다.
+  await page.goto('/#/study/subjects/new')
+  await expect(page.getByRole('heading', { name: '과목 추가' })).toBeVisible()
+  await expect(page.locator('.task-editor')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: '학습 내용 추가' })).toBeVisible()
+  await expect(page.getByText('비워 두면 위에서 고른 과목 요일로')).toBeVisible()
+  await page.screenshot({ path: testInfo.outputPath('0-subject-new.png'), fullPage: true })
+
   // 학습 내용 없이 과목만: 기본 평일에서 토·일을 켜 매일로
   await addSubject(page, { name: '독서', subjectDays: ['토', '일'], tasks: [] })
   await page.goto('/#/study')

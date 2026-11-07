@@ -56,7 +56,8 @@ function SubjectForm({ subjectId }: { subjectId?: string }) {
           .filter((task) => task.subjectId === original.id)
           .sort(byOrder)
           .map((task) => ({ key: task.id, id: task.id, name: task.name, weekdays: task.weekdays }))
-      : [newTaskItem()],
+      : // 새 과목은 빈 줄 없이 시작합니다. 학습 내용 없이 과목 요일로만 체크할 수도 있어서입니다.
+        [],
   )
   // 방금 추가한 줄에 커서를 둡니다.
   const [focusKey, setFocusKey] = useState<string | null>(null)
@@ -208,8 +209,12 @@ function SubjectForm({ subjectId }: { subjectId?: string }) {
         </div>
 
         <div className="card form-section">
-          <h2 className="section-title">학습 내용</h2>
-          <p className="muted">매주 반복하는 학습 내용과 계획한 요일을 넣으세요. 계획하지 않은 요일에도 체크할 수는 있습니다.</p>
+          <h2 className="section-title">학습 내용 (선택)</h2>
+          <p className="muted">
+            {tasks.length === 0
+              ? '넣지 않아도 됩니다. 비워 두면 위에서 고른 과목 요일로 과목 하나만 체크합니다.'
+              : '매주 반복하는 학습 내용과 계획한 요일을 넣으세요. 계획하지 않은 요일에도 체크할 수는 있습니다.'}
+          </p>
 
           {tasks.map((item, index) => {
             const label = `학습 내용 ${index + 1}`
@@ -248,7 +253,9 @@ function SubjectForm({ subjectId }: { subjectId?: string }) {
             <PlusIcon />
             학습 내용 추가
           </button>
-          <p className="muted">이름이 빈 줄은 저장하지 않습니다. 학습 내용을 지우면 그 체크 기록도 지워집니다.</p>
+          {tasks.length > 0 && (
+            <p className="muted">이름이 빈 줄은 저장하지 않습니다. 학습 내용을 지우면 그 체크 기록도 지워집니다.</p>
+          )}
         </div>
 
         {formError && <p className="field-error" role="alert">{formError}</p>}

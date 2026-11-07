@@ -33,8 +33,8 @@ export async function addSubject(page: Page, options: SubjectOptions) {
   if (options.color) await page.getByRole('radio', { name: options.color }).check()
   if (options.subjectDays) await toggleWeekdays(page, '과목', options.subjectDays)
   for (let index = 0; index < options.tasks.length; index++) {
-    // 새 과목 화면에는 빈 학습 내용 줄이 하나 있습니다.
-    if (index > 0) await page.getByRole('button', { name: '학습 내용 추가' }).click()
+    // 과목 화면은 빈 줄 없이 시작하므로 줄마다 '학습 내용 추가'를 누릅니다.
+    await page.getByRole('button', { name: '학습 내용 추가' }).click()
     const task = options.tasks[index]
     const label = `학습 내용 ${index + 1}`
     await page.getByLabel(`${label} 이름`).fill(task.name)
